@@ -1,0 +1,174 @@
+---
+title: 'Report Assessment Ch5 Subsidies Reform'
+subtitle: 'Data Management Report'
+author:
+  - name: Rainer M Krug
+    id: rmk
+    orcid: 0000-0002-7490-0066
+    email: Rainer.Krug@Senckenberg.de, Rainer@Krugs.de
+    affiliation: 
+      - name: Senckenberg
+        city: Frankfurt (Main)
+        url: https://www.senckenberg.de/en/institutes/sbik-f/
+    roles: [author, editor]
+abstract: > 
+  A short description what this is about.
+  This is not a tracditional abstract, but rather something else ...
+# keywords:
+#   - aaaaa
+#   - bbbbb
+license: "CC BY"
+copyright: 
+  holder: No idea
+  year: 2023
+citation: 
+  type: report
+  container-title: IPBES Data Management Report
+  doi: XXXXXX
+doi: XXXXXX
+version: 0.0.1
+
+format:
+    html:
+        toc: true
+        toc-depth: 4
+        toc_expand: true
+        embed-resources: true
+        code-fold: true
+        code-summary: 'Show the code'
+
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+if (!exists("params")) {
+    params <- rmarkdown::yaml_front_matter("Report.qmd")$params
+}
+
+
+build <- as.integer(readLines("buildNo"))
+build <- build + 1
+writeLines(as.character(build), "buildNo")
+
+knitr::opts_chunk$set(message = NA)
+
+library(openalexR)
+
+compact <- function(x) {
+    x |>
+        gsub(pattern = "\n", replacement = " ") |>
+        gsub(pattern = "\\*", replacement = "") |>
+        gsub(pattern = "\\s+", replacement = " ") |>
+        gsub(pattern = "\\( ", replacement = "(") |>
+        gsub(pattern = " )", replacement = ")")
+}
+
+R1_st <- list()
+
+st <- readLines(file.path("input", "R1.txt"))[1:70]
+st[70] <- gsub(pattern = " OR", replacement = "", st[70])
+R1_st[[1]] <- paste(collapse = " ", st)
+
+st <- readLines(file.path("input", "R1.txt"))
+st <- st[71:length(st)]
+R1_st[[2]] <- paste(collapse = " ", st)
+
+rm(st)
+
+R2_st <- readLines(file.path("input", "R2.txt")) |>
+    paste(collapse = " ")
+
+```
+
+## Working Title
+IPBES_TCA_Ch5_Subsidies_Reform
+
+## Code repo
+
+[Github - private](https://github.com/IPBES-Data/IPBES_TCA_Ch5_Subsidies_Reform)
+
+## Build No: `r build`
+
+%The BuidNo is automatically increased by one each time the report is rendered. It is used to indicate different renderings when the version stays the same%.
+
+## Introduction
+
+### The following steps will be done in documented in this report:
+
+- [x] Do asearch with `R1_st` and `R2_st` and determine the  number of hits
+- [ ] Should the copplete `**R1** AND **R2**` be downloaded, or only a random subsets?
+
+
+## Step 1: Determination of numbers
+
+The search terms are based on the [shared google doc](https://docs.google.com/document/d/1_FmxYVhpv2Bu2Gbbxb7cWc49f3soFvc64Qau_x2RAqI){target=_blank}. They are cleaned up for the usage in [OpenAlex](https://openalex.org/){target=_blank}.
+
+## R1
+
+The search terms is [R1](input/R1.txt){target=_blank}
+
+```{r}
+#| label: get get_R1_count
+#|
+
+R1_count <- sapply(
+    R1_st,
+    function(st) {
+        openalexR::oa_fetch(
+            title_and_abstract.search = compact(st),
+            count_only = TRUE,
+            verbose = TRUE
+        )[, "count"]
+    }
+) |>
+    sum()
+```
+
+
+## R2
+
+The search terms is [R2](input/R2.txt){target=_blank}
+
+```{r}
+#| label: get get_R2_count
+#|
+
+R2_count <- openalexR::oa_fetch(
+    title_and_abstract.search = compact(R2_st),
+    count_only = TRUE,
+    verbose = TRUE
+)[, "count"]
+```
+
+## R1 AND R2
+
+The search term is [R1](input/R1.txt){target=_blank} AND [R2](input/R2.txt){target=_blank}
+
+```{r}
+#| label: get get_R2_R2_count
+#|
+
+R1_R2_count <- sapply(
+    R1_st,
+    function(st) {
+        openalexR::oa_fetch(
+            title_and_abstract.search = compact(paste0("(", st, ") AND (", R2_st, ")")),
+            count_only = TRUE,
+            verbose = TRUE
+        )[, "count"]
+    }
+) |>
+    sum()
+
+```
+
+## Results
+
+### Number of hits
+- **R1:**: `r formatC(R1_count, format="f", big.mark=",", digits=0)` hits
+- **R2:** `r formatC(R2_count, format="f", big.mark=",", digits=0)` hits
+- **R1 AND R2:** `r formatC(R1_R2_count, format="f", big.mark=",", digits=0)` hits
+
+These are numbers which can easily be downloaded, either as a single set or several random sets.

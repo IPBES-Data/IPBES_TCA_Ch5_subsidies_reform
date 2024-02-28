@@ -1,0 +1,645 @@
+Return-Path: <s.villasante.arg@gmail.com>
+Received: from director-05.heinlein-hosting.de ([2001:67c:2050:104:0:1:25:1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
+	by dobby27b.heinlein-hosting.de with LMTPS
+	id yFKlMBFB22VcygEADdYnbQ
+	(envelope-from <s.villasante.arg@gmail.com>); Sun, 25 Feb 2024 14:30:57 +0100
+Received: from mx1.mailbox.org ([2001:67c:2050:104:0:1:25:1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits))
+	by director-05.heinlein-hosting.de with LMTPS
+	id OJqjLxFB22W7wQAATazItQ
+	(envelope-from <s.villasante.arg@gmail.com>); Sun, 25 Feb 2024 14:30:57 +0100
+Authentication-Results: spamfilter01.heinlein-hosting.de (amavisd-new);
+	dkim=pass (2048-bit key) header.d=gmail.com
+Received: from mail-lj1-x22b.google.com (mail-lj1-x22b.google.com [IPv6:2a00:1450:4864:20::22b])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx1.mailbox.org (Postfix) with ESMTPS id 7B2C1419F0;
+	Sun, 25 Feb 2024 14:30:51 +0100 (CET)
+Received: by mail-lj1-x22b.google.com with SMTP id 38308e7fff4ca-2d2628e81b8so15708401fa.0;
+        Sun, 25 Feb 2024 05:30:51 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1708867850; x=1709472650; darn=senckenberg.de;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=olQBZ187BQz/7TBdyv/958Ts903UeWx/8Fb6vv2PdGE=;
+        b=Y8BIjR8KqytLRMwLo28y01MNp2pnHGYwJrbYL+3GnOl68gNsVNBmzhFRZPyQ1kQLgZ
+         8ILDi8VkqohWLoISQwEcCxALk2zz+QSJP+JzMvBivSTByfJuMNn4Yais6jHJe5vVWgn9
+         b69RqgvXb1R36u2Qc0PeihlzVPmHzrXe2n57D/FXzdcdo3RYhFK4dsBqgTFWvJmyXYrf
+         22LP5GgU5k5QiCkwroXF5KYYKId6q4jnksCVFMJYYdy+esMjwR6i7UYhsQ6jLajMAzqV
+         S99Cu/lxTVlIml5XGjh90mvOopTRAF7LIGX2Z1012oHGrEXSTAfR2pbQymCOmdcBQWhQ
+         Hf5A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1708867850; x=1709472650;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=olQBZ187BQz/7TBdyv/958Ts903UeWx/8Fb6vv2PdGE=;
+        b=ZKjjcTPdrtBira+jY+tNvxN8TqlRs8L98pqwFqZw/DK9AoJA5LKDISRwz5xoI7d2Fh
+         t13JFlkGyRfoPWH3mms3nrnwph4hKZ0+yLuFDR9fxi98liFzj7g+iv+rycM05v6ziwCj
+         OqzNGzTSNXPWGWg2StbJfq9p4A9SM2b9NniqVvkyRFrDSBDoeBDTZ8AGH111koN8v2gR
+         TbxZyQNGSYO4WfgSgIhTd/gZwSCi/DGPLR71/Tyn0d2MmvHWa/igeVTSz9xs4imBxdV3
+         dXyl+ThHCnH9dGx8dvtZdH+hX3cd2zrQnJtqEHGMuVegFyz/xvdfCMNER4d5u9yKdrI4
+         glMA==
+X-Forwarded-Encrypted: i=1; AJvYcCXq5SrZ+PhgMytiz381EpWN7ajn+EQb4xW1BGDruXT+AmTxrG3FYfhPzoH1saSniZ2L4kLb/0otwPSz+i9rSzcRpGJsnqKkXvFVgx0SQHomBzCVCYsJFPJFK9cJsCi/yFAinf7FCpmdBw==
+X-Gm-Message-State: AOJu0YzaGfJqZ1XgEBwjyN0bcDADSV9qEmmceMH02S+YQHTEXrfMOqhA
+	QsVY8hNpqmturtY0D7Ipwm1Z/VtUNzOET+fIIMLW0IzFfKAkS/mgbPDX+kuOT571hgrsypOHP5T
+	TsBLWD8adN1xJWD3Tb5KqxJz/IRQ=
+X-Google-Smtp-Source: AGHT+IHQhEz4YJ2nznMB8w1gtLEmhKrP1wq+HWfc0AvaPTFP/S6zeXMGiYXI03CpBOoQF/taszSOJvfWAgdUcFr7o6Q=
+X-Received: by 2002:a05:651c:2dd:b0:2d2:6457:4087 with SMTP id
+ f29-20020a05651c02dd00b002d264574087mr1194281ljo.6.1708867849835; Sun, 25 Feb
+ 2024 05:30:49 -0800 (PST)
+MIME-Version: 1.0
+References: <CANLja79x+8+5O=XSWXJvhdk0yKkNqCRymJdVmUG6EGTMh0OmtQ@mail.gmail.com>
+ <a5b7b3cf6bf862b17bcde8d23924b0b2@mail.gmail.com> <CANLja7-gQkoseeFj=LLSXce7mNON=MKmFQiczQgDGww5Ysk-Pw@mail.gmail.com>
+ <7c9a38c3b2351acb7b7eb56caf7bb4df@mail.gmail.com>
+In-Reply-To: <7c9a38c3b2351acb7b7eb56caf7bb4df@mail.gmail.com>
+From: Sebastian Villasante <s.villasante.arg@gmail.com>
+Date: Sun, 25 Feb 2024 14:30:36 +0100
+Message-ID: <CANLja793a3+79zC+7inEDziD0u2AQ2nxxugLKQbab4F8rD_Gww@mail.gmail.com>
+Subject: Re: Positive subsidy examples
+To: Arun Agrawal <arunagra@umich.edu>, Ram Pandit <ram.pandit@uwa.edu.au>
+Cc: "De: Rainer M Krug" <Rainer.Krug@senckenberg.de>, 
+	=?UTF-8?Q?Victoria_Reyes_Garc=C3=ADa?= <Victoria.Reyes@uab.cat>, 
+	Aidin Niamir <aidin.niamir@senckenberg.de>, Renske Gudde <renske.gudde@senckenberg.de>, 
+	karina Benessaiah <karinaben@gmail.com>, Camille Guibal <camille.guibal@umontpellier.fr>, 
+	Sebastian Villasante <s.villasante.arg@gmail.com>, 
+	=?UTF-8?Q?Sebasti=C3=A1n_Villasante?= <sebastian.villasante@usc.es>
+Content-Type: multipart/alternative; boundary="00000000000028585e061234cda0"
+X-Rspamd-Queue-Id: 7B2C1419F0
+X-MBO-SPAM-Probability: 
+X-Rspamd-Score: -7.30 / 15.00 / 15.00
+
+--00000000000028585e061234cda0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hi all
+
+I drafted the document
+<https://docs.google.com/document/d/1_FmxYVhpv2Bu2Gbbxb7cWc49f3soFvc64Qau_x=
+2RAqI/edit>
+with the main categories we have discussed today to extract information
+from the TCA corpus of evidence. The categories are a) platforms (e.g.
+international organizations, institutes, etc), b) sectors (or themes), c)
+currencies, d) the purpose of the reform (the "why"), and e) the year of
+the reform.
+
+Please take a look and add any change directly in the document.
+
+Thank you, Seba
+
+Sebastian Villasante
+************************
+Director EqualSea Lab <https://equalsea.eu/> I CRETUS
+<https://cretus.usc.es/>
+*IPBES Transformative Change Assessment  <https://ipbes.net/>*
+IPBES 2022 Gulbenkian Prize for Humanity
+<https://gulbenkian.pt/en/the-foundation/gulbenkian-prize-for-humanity/>
+PECS Ocean Equity for Sustainable Futures
+<https://pecs-science.org/ocean-equity-for-sustainable-futures/>
+*Editor* *AMBIO <https://www.springer.com/journal/13280> *I *Ecosystems and
+People * <https://www.tandfonline.com/journals/tbsm22>I *npj Ocean
+Sustainability*
+<https://urldefense.com/v3/__https://www.nature.com/npjoceansustain/__;!!NV=
+zLfOphnbDXSw!Cc-2LzpqratJpN13SgFu8hG-EYfojaFFc37WN5Nt23-qG3WZp3gjR4NpV2ja4u=
+RQ4O7KCObRwtzKc7YqVGYPQVg8V2CuWPQ$>
+ I *Marine Policy *
+
+University of Santiago de Compostela
+15782. A Coru=C3=B1a, Spain
+Tel. +34 981563 100 I Extension 24441
+
+Karl-G=C3=B6ran M=C3=A4ler Scholar
+The Beijer Institute of Ecological Economics, Sweden
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+On Sun, 25 Feb 2024 at 12:05, Arun Agrawal <arunagra@umich.edu> wrote:
+
+> Thanks, Sebastian. For the examples of subsidy removal or reduction, it
+> might be good also to identify what accounts for the removal or reduction
+> of the subsidy, because that will help us inform and explain the message =
+on
+> =E2=80=9CHow=E2=80=9D to remove harmful subsidies.
+>
+> Many thanks
+>
+> a
+>
+>
+>
+> Professor, SEAS, University of Michigan,
+>
+> Ann Arbor MI 48109 USA
+>
+> 734 647 5948
+>
+>
+>
+> *From:* Sebastian Villasante <s.villasante.arg@gmail.com>
+> *Sent:* Sunday, February 25, 2024 4:17 AM
+> *To:* Arun Agrawal <arunagra@umich.edu>
+> *Cc:* De: Rainer M Krug <Rainer.Krug@senckenberg.de>; Victoria Reyes
+> Garc=C3=ADa <Victoria.Reyes@uab.cat>; Aidin Niamir <aidin.niamir@senckenb=
+erg.de>;
+> Renske Gudde <renske.gudde@senckenberg.de>
+> *Subject:* Re: Positive subsidy examples
+>
+>
+>
+> Thanks Arun for these suggestions. Yes, we have examples of
+> reduction/removal to include and I already planned to collect assistance =
+or
+> livelihood subsidies, etc. We also thought that one way would be to
+> clustered/grouped them by sectors.
+>
+> Seba
+>
+>
+> Sebastian Villasante
+>
+> ************************
+>
+> Director EqualSea Lab <https://equalsea.eu/> I CRETUS
+> <https://cretus.usc.es/>
+>
+> *IPBES Transformative Change Assessment  <https://ipbes.net/>*
+>
+> IPBES 2022 Gulbenkian Prize for Humanity
+> <https://gulbenkian.pt/en/the-foundation/gulbenkian-prize-for-humanity/>
+>
+> PECS Ocean Equity for Sustainable Futures
+> <https://pecs-science.org/ocean-equity-for-sustainable-futures/>
+>
+> *Editor* *AMBIO <https://www.springer.com/journal/13280> *I *Ecosystems
+> and People * <https://www.tandfonline.com/journals/tbsm22>I *npj Ocean
+> Sustainability*
+> <https://urldefense.com/v3/__https:/www.nature.com/npjoceansustain/__;!!N=
+VzLfOphnbDXSw!Cc-2LzpqratJpN13SgFu8hG-EYfojaFFc37WN5Nt23-qG3WZp3gjR4NpV2ja4=
+uRQ4O7KCObRwtzKc7YqVGYPQVg8V2CuWPQ$>
+>  I *Marine Policy *
+>
+> University of Santiago de Compostela
+>
+> 15782. A Coru=C3=B1a, Spain
+>
+> Tel. +34 981563 100 I Extension 24441
+>
+>
+>
+> Karl-G=C3=B6ran M=C3=A4ler Scholar
+>
+> The Beijer Institute of Ecological Economics, Sweden
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+> On Sun, 25 Feb 2024 at 09:45, Arun Agrawal <arunagra@umich.edu> wrote:
+>
+> Just looking at the list of subsidies, Sebastian. I like identifying
+> examples of positive subsidies =E2=80=93 I akls wonder if we have example=
+s of
+> subsidy removal or reduction altogether?
+>
+> Additionally, one type set of examples of subsidies that have demonstrate=
+d
+> positive effects across a very large number of rigorous evaluations are
+> social assistance subsidies =E2=80=93 or livelihood subsidies that are es=
+sentially
+> consumption subsidies. Sometimes general such as that provide conditional
+> or unconditional cash, or sector specific such as for health, or infant
+> nutrition, or for the elderly/pension, etc=E2=80=A6
+>
+> With all best
+>
+> Arun
+>
+>
+>
+> Professor, SEAS, University of Michigan,
+>
+> Ann Arbor MI 48109 USA
+>
+> 734 647 5948
+>
+>
+>
+> *From:* Sebastian Villasante <s.villasante.arg@gmail.com>
+> *Sent:* Sunday, February 25, 2024 3:29 AM
+> *To:* De: Rainer M Krug <Rainer.Krug@senckenberg.de>; Victoria Reyes
+> Garc=C3=ADa <Victoria.Reyes@uab.cat>; Sebastian Villasante <
+> s.villasante.arg@gmail.com>; Sebasti=C3=A1n Villasante <
+> sebastian.villasante@usc.es>; Arun Agrawal <arunagra@umich.edu>; Aidin
+> Niamir <aidin.niamir@senckenberg.de>; Renske Gudde <
+> renske.gudde@senckenberg.de>
+> *Subject:* Positive subsidy examples
+>
+>
+>
+> Hi all,
+>
+>
+>
+> We really advanced and agreed with a solid list of keywords in the corpus
+> of evidence and the subsidy reforms. Thanks a lot Rainer for spending tim=
+e
+> to discuss it. Please see the excel
+> <https://docs.google.com/spreadsheets/d/1ZKjKUiz1Di0b0CNUSwRiOwom5K-0n1YH=
+Q1qDbNXSEik/edit#gid=3D0>
+> with the current examples of positive subsidies.
+>
+>
+>
+> Aidin and I discussed that we can search for a sample of examples within
+> the corpus of evidence by starting with the examples from international
+> organizations (UN, FAO, etc.). We will further discuss today and tomorrow
+> and will back to you.
+>
+>
+>
+> Cheers,
+>
+>
+>
+> Seba
+>
+> Sebastian Villasante
+>
+> ************************
+>
+> Director EqualSea Lab <https://equalsea.eu/> I CRETUS
+> <https://cretus.usc.es/>
+>
+> *IPBES Transformative Change Assessment  <https://ipbes.net/>*
+>
+> IPBES 2022 Gulbenkian Prize for Humanity
+> <https://gulbenkian.pt/en/the-foundation/gulbenkian-prize-for-humanity/>
+>
+> PECS Ocean Equity for Sustainable Futures
+> <https://pecs-science.org/ocean-equity-for-sustainable-futures/>
+>
+> *Editor* *AMBIO <https://www.springer.com/journal/13280> *I *Ecosystems
+> and People * <https://www.tandfonline.com/journals/tbsm22>I *npj Ocean
+> Sustainability*
+> <https://urldefense.com/v3/__https:/www.nature.com/npjoceansustain/__;!!N=
+VzLfOphnbDXSw!Cc-2LzpqratJpN13SgFu8hG-EYfojaFFc37WN5Nt23-qG3WZp3gjR4NpV2ja4=
+uRQ4O7KCObRwtzKc7YqVGYPQVg8V2CuWPQ$>
+>  I *Marine Policy *
+>
+> University of Santiago de Compostela
+>
+> 15782. A Coru=C3=B1a, Spain
+>
+> Tel. +34 981563 100 I Extension 24441
+>
+>
+>
+> Karl-G=C3=B6ran M=C3=A4ler Scholar
+>
+> The Beijer Institute of Ecological Economics, Sweden
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+
+--00000000000028585e061234cda0
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hi all<div><br></div><div>I drafted the <a href=3D"https:/=
+/docs.google.com/document/d/1_FmxYVhpv2Bu2Gbbxb7cWc49f3soFvc64Qau_x2RAqI/ed=
+it" target=3D"_blank">document</a> with the main categories we have discuss=
+ed today to extract information from the TCA corpus of evidence. The catego=
+ries are a) platforms (e.g. international organizations, institutes, etc), =
+b) sectors (or themes), c) currencies, d) the purpose of the reform (the &q=
+uot;why&quot;), and e) the year of the reform.</div><div><br></div><div>Ple=
+ase take a look and add any change directly in the document.</div><div><br>=
+</div><div>Thank you, Seba</div><div>=C2=A0<br clear=3D"all"><div><div dir=
+=3D"ltr" class=3D"gmail_signature" data-smartmail=3D"gmail_signature"><div =
+dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"=
+ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><d=
+iv dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=
+=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr=
+"><div dir=3D"ltr"><div dir=3D"ltr"><div dir=3D"ltr"><div><span></span><img=
+ width=3D"95" height=3D"96" src=3D"https://ci3.googleusercontent.com/mail-s=
+ig/AIorK4yXuPHm7x5LCnZ_YWd3DiCOyWXklR71S-jIB_-0R_i1lbpZgffCHEco-rNuAnWf4erO=
+E816beQ"></div><div>Sebastian Villasante</div><div>************************=
+</div><div>Director=C2=A0<a href=3D"https://equalsea.eu/" target=3D"_blank"=
+>EqualSea Lab</a>=C2=A0I <a href=3D"https://cretus.usc.es/" target=3D"_blan=
+k">CRETUS</a></div><div><b style=3D"color:rgb(36,36,36);font-family:Calibri=
+,sans-serif;font-size:14.6667px"><span style=3D"border:0px;font-style:inher=
+it;font-variant:inherit;font-weight:inherit;font-stretch:inherit;font-size:=
+9pt;line-height:inherit;font-family:inherit;margin:0px;padding:0px;vertical=
+-align:baseline;color:black!important"><a href=3D"https://ipbes.net/" targe=
+t=3D"_blank">IPBES Transformative Change Assessment=C2=A0</a></span></b></d=
+iv><div><a href=3D"https://gulbenkian.pt/en/the-foundation/gulbenkian-prize=
+-for-humanity/" target=3D"_blank">IPBES 2022 Gulbenkian Prize for Humanity<=
+/a></div><div><a href=3D"https://pecs-science.org/ocean-equity-for-sustaina=
+ble-futures/" target=3D"_blank">PECS Ocean Equity for Sustainable Futures</=
+a></div><div><b style=3D"color:rgb(36,36,36);font-family:Calibri,sans-serif=
+;font-size:14.6667px"><span style=3D"border:0px;font-style:inherit;font-var=
+iant:inherit;font-weight:inherit;font-stretch:inherit;font-size:9pt;line-he=
+ight:inherit;font-family:inherit;margin:0px;padding:0px;vertical-align:base=
+line;color:black!important">Editor</span></b><span style=3D"border:0px;font=
+-stretch:inherit;font-size:9pt;line-height:inherit;font-family:Calibri,sans=
+-serif;margin:0px;padding:0px;vertical-align:baseline"><font color=3D"#0000=
+00">=C2=A0</font><b><font color=3D"#0000ff"><a href=3D"https://www.springer=
+.com/journal/13280" target=3D"_blank">AMBIO</a> </font></b><font color=3D"#=
+000000">I </font><a href=3D"https://www.tandfonline.com/journals/tbsm22" ta=
+rget=3D"_blank"><font color=3D"#0000ff"><b>Ecosystems and People </b></font=
+></a><font color=3D"#000000">I=C2=A0</font><font color=3D"#0000ff"><a href=
+=3D"https://urldefense.com/v3/__https://www.nature.com/npjoceansustain/__;!=
+!NVzLfOphnbDXSw!Cc-2LzpqratJpN13SgFu8hG-EYfojaFFc37WN5Nt23-qG3WZp3gjR4NpV2j=
+a4uRQ4O7KCObRwtzKc7YqVGYPQVg8V2CuWPQ$" rel=3D"noopener noreferrer" style=3D=
+"border:0px;font:inherit;margin:0px;padding:0px;vertical-align:baseline" ta=
+rget=3D"_blank"><b>npj Ocean Sustainability</b></a>=C2=A0I</font><font colo=
+r=3D"#000000"> </font></span><span style=3D"border:0px;font-stretch:inherit=
+;font-size:9pt;line-height:inherit;font-family:Calibri,sans-serif;margin:0p=
+x;padding:0px;vertical-align:baseline"><b><font color=3D"#0000ff"><u>Marine=
+ Policy</u>=C2=A0</font></b></span></div><div><span style=3D"border:0px;fon=
+t-stretch:inherit;font-size:9pt;line-height:inherit;font-family:Calibri,san=
+s-serif;margin:0px;padding:0px;vertical-align:baseline"><b><font color=3D"#=
+0000ff"><img src=3D"https://ci3.googleusercontent.com/mail-sig/AIorK4z3JaI9=
+WOuMJRWo2ClqlrL6p-Qzs7f8GuKWBaIAcFmRsDuEsKz94W3WLeynUMXy07AcZ09hqVY"><br></=
+font></b></span></div><div>University of Santiago de Compostela</div><div>1=
+5782. A Coru=C3=B1a, Spain</div><div>Tel. +34 981563 100 I Extension 24441<=
+/div><div><br></div><div>Karl-G=C3=B6ran M=C3=A4ler Scholar</div><div>The B=
+eijer Institute of Ecological Economics, Sweden</div><div><br></div><div><b=
+r></div><div><br></div><div><br></div><div><br></div><div><br></div><div><b=
+r></div><div></div><div><br></div><div><br></div><div><br></div><div><br><b=
+r><br></div></div></div></div></div></div></div></div></div></div></div></d=
+iv></div></div></div></div></div></div></div></div></div></div></div></div>=
+<br></div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr" class=3D"gm=
+ail_attr">On Sun, 25 Feb 2024 at 12:05, Arun Agrawal &lt;<a href=3D"mailto:=
+arunagra@umich.edu" target=3D"_blank">arunagra@umich.edu</a>&gt; wrote:<br>=
+</div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;b=
+order-left:1px solid rgb(204,204,204);padding-left:1ex"><div><div lang=3D"E=
+N-US"><div><p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family=
+:Calibri,sans-serif;color:rgb(31,73,125)">Thanks, Sebastian. For the exampl=
+es of subsidy removal or reduction, it might be good also to identify what =
+accounts for the removal or reduction of the subsidy, because that will hel=
+p us inform and explain the message on =E2=80=9CHow=E2=80=9D to remove harm=
+ful subsidies.</span></p><p class=3D"MsoNormal"><span style=3D"font-size:11=
+pt;font-family:Calibri,sans-serif;color:rgb(31,73,125)">Many thanks</span><=
+/p><p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri=
+,sans-serif;color:rgb(31,73,125)">a</span></p><p class=3D"MsoNormal"><span =
+style=3D"font-size:11pt;font-family:Calibri,sans-serif;color:rgb(31,73,125)=
+">=C2=A0</span></p><p class=3D"MsoNormal"><span style=3D"font-size:11pt;fon=
+t-family:Calibri,sans-serif;color:rgb(31,73,125)">Professor, SEAS, Universi=
+ty of Michigan, </span></p><p class=3D"MsoNormal"><span style=3D"font-size:=
+11pt;font-family:Calibri,sans-serif;color:rgb(31,73,125)">Ann Arbor MI 4810=
+9 USA</span></p><p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-f=
+amily:Calibri,sans-serif;color:rgb(31,73,125)">734 647 5948</span></p><p cl=
+ass=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sans-se=
+rif;color:rgb(31,73,125)">=C2=A0</span></p><p class=3D"MsoNormal"><b><span =
+style=3D"font-size:11pt;font-family:Calibri,sans-serif">From:</span></b><sp=
+an style=3D"font-size:11pt;font-family:Calibri,sans-serif"> Sebastian Villa=
+sante &lt;<a href=3D"mailto:s.villasante.arg@gmail.com" target=3D"_blank">s=
+.villasante.arg@gmail.com</a>&gt; <br><b>Sent:</b> Sunday, February 25, 202=
+4 4:17 AM<br><b>To:</b> Arun Agrawal &lt;<a href=3D"mailto:arunagra@umich.e=
+du" target=3D"_blank">arunagra@umich.edu</a>&gt;<br><b>Cc:</b> De: Rainer M=
+ Krug &lt;<a href=3D"mailto:Rainer.Krug@senckenberg.de" target=3D"_blank">R=
+ainer.Krug@senckenberg.de</a>&gt;; Victoria Reyes Garc=C3=ADa &lt;<a href=
+=3D"mailto:Victoria.Reyes@uab.cat" target=3D"_blank">Victoria.Reyes@uab.cat=
+</a>&gt;; Aidin Niamir &lt;<a href=3D"mailto:aidin.niamir@senckenberg.de" t=
+arget=3D"_blank">aidin.niamir@senckenberg.de</a>&gt;; Renske Gudde &lt;<a h=
+ref=3D"mailto:renske.gudde@senckenberg.de" target=3D"_blank">renske.gudde@s=
+enckenberg.de</a>&gt;<br><b>Subject:</b> Re: Positive subsidy examples</spa=
+n></p><p class=3D"MsoNormal">=C2=A0</p><div><p class=3D"MsoNormal">Thanks A=
+run for these suggestions. Yes, we have examples of reduction/removal to in=
+clude and I already planned to collect=C2=A0assistance or livelihood subsid=
+ies, etc. We also thought that one way would be to clustered/grouped them b=
+y sectors.</p><div><p class=3D"MsoNormal">Seba</p><div><p class=3D"MsoNorma=
+l"><br clear=3D"all"></p><div><div><div><div><div><div><div><div><div><div>=
+<div><div><div><div><div><div><div><div><div><div><div><div><div><div><p cl=
+ass=3D"MsoNormal"><img width=3D"94" height=3D"96" style=3D"width: 0.9821in;=
+ height: 1in;" id=3D"m_-7695999651840605699m_2579205784970241937_x0000_i102=
+5" src=3D"https://ci3.googleusercontent.com/mail-sig/AIorK4yXuPHm7x5LCnZ_YW=
+d3DiCOyWXklR71S-jIB_-0R_i1lbpZgffCHEco-rNuAnWf4erOE816beQ"></p></div><div><=
+p class=3D"MsoNormal">Sebastian Villasante</p></div><div><p class=3D"MsoNor=
+mal">************************</p></div><div><p class=3D"MsoNormal">Director=
+=C2=A0<a href=3D"https://equalsea.eu/" target=3D"_blank">EqualSea Lab</a>=
+=C2=A0I <a href=3D"https://cretus.usc.es/" target=3D"_blank">CRETUS</a></p>=
+</div><div><p class=3D"MsoNormal"><b><span style=3D"font-size:9pt;font-fami=
+ly:&quot;inherit&quot;,serif;color:rgb(36,36,36);border:1pt none windowtext=
+;padding:0in"><a href=3D"https://ipbes.net/" target=3D"_blank">IPBES Transf=
+ormative Change Assessment=C2=A0</a></span></b></p></div><div><p class=3D"M=
+soNormal"><a href=3D"https://gulbenkian.pt/en/the-foundation/gulbenkian-pri=
+ze-for-humanity/" target=3D"_blank">IPBES 2022 Gulbenkian Prize for Humanit=
+y</a></p></div><div><p class=3D"MsoNormal"><a href=3D"https://pecs-science.=
+org/ocean-equity-for-sustainable-futures/" target=3D"_blank">PECS Ocean Equ=
+ity for Sustainable Futures</a></p></div><div><p class=3D"MsoNormal"><b><sp=
+an style=3D"font-size:9pt;font-family:&quot;inherit&quot;,serif;color:rgb(3=
+6,36,36);border:1pt none windowtext;padding:0in">Editor</span></b><span sty=
+le=3D"font-size:9pt;font-family:Calibri,sans-serif;color:black;border:1pt n=
+one windowtext;padding:0in">=C2=A0</span><b><span style=3D"font-size:9pt;fo=
+nt-family:Calibri,sans-serif;color:blue;border:1pt none windowtext;padding:=
+0in"><a href=3D"https://www.springer.com/journal/13280" target=3D"_blank">A=
+MBIO</a> </span></b><span style=3D"font-size:9pt;font-family:Calibri,sans-s=
+erif;color:black;border:1pt none windowtext;padding:0in">I </span><span sty=
+le=3D"font-size:9pt;font-family:Calibri,sans-serif;border:1pt none windowte=
+xt;padding:0in"><a href=3D"https://www.tandfonline.com/journals/tbsm22" tar=
+get=3D"_blank"><b>Ecosystems and People </b></a><span style=3D"color:black"=
+>I=C2=A0</span><span style=3D"color:blue"><a href=3D"https://urldefense.com=
+/v3/__https:/www.nature.com/npjoceansustain/__;!!NVzLfOphnbDXSw!Cc-2Lzpqrat=
+JpN13SgFu8hG-EYfojaFFc37WN5Nt23-qG3WZp3gjR4NpV2ja4uRQ4O7KCObRwtzKc7YqVGYPQV=
+g8V2CuWPQ$" target=3D"_blank"><b>npj Ocean Sustainability</b></a>=C2=A0I</s=
+pan><span style=3D"color:black"> </span><b><u><span style=3D"color:blue">Ma=
+rine Policy</span></u><span style=3D"color:blue">=C2=A0</span></b></span></=
+p></div><div><p class=3D"MsoNormal"><b><span style=3D"font-size:9pt;font-fa=
+mily:Calibri,sans-serif;color:blue;border:1pt none windowtext;padding:0in">=
+<img border=3D"0" id=3D"m_-7695999651840605699m_2579205784970241937_x0000_i=
+1026" src=3D"https://ci3.googleusercontent.com/mail-sig/AIorK4z3JaI9WOuMJRW=
+o2ClqlrL6p-Qzs7f8GuKWBaIAcFmRsDuEsKz94W3WLeynUMXy07AcZ09hqVY"></span></b></=
+p></div><div><p class=3D"MsoNormal">University of Santiago de Compostela</p=
+></div><div><p class=3D"MsoNormal">15782. A Coru=C3=B1a, Spain</p></div><di=
+v><p class=3D"MsoNormal">Tel. +34 981563 100 I Extension 24441</p></div><di=
+v><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal">Karl-G=
+=C3=B6ran M=C3=A4ler Scholar</p></div><div><p class=3D"MsoNormal">The Beije=
+r Institute of Ecological Economics, Sweden</p></div><div><p class=3D"MsoNo=
+rmal">=C2=A0</p></div><div><p class=3D"MsoNormal">=C2=A0</p></div><div><p c=
+lass=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal">=C2=A0</p></=
+div><div><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal"=
+>=C2=A0</p></div><div><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=
+=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal">=C2=A0</p></div>=
+<div><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal" sty=
+le=3D"margin-bottom:12pt"><br><br></p></div></div></div></div></div></div><=
+/div></div></div></div></div></div></div></div></div></div></div></div></di=
+v></div></div></div></div></div><p class=3D"MsoNormal">=C2=A0</p></div></di=
+v></div><p class=3D"MsoNormal">=C2=A0</p><div><div><p class=3D"MsoNormal">O=
+n Sun, 25 Feb 2024 at 09:45, Arun Agrawal &lt;<a href=3D"mailto:arunagra@um=
+ich.edu" target=3D"_blank">arunagra@umich.edu</a>&gt; wrote:</p></div><bloc=
+kquote style=3D"border-top:none;border-right:none;border-bottom:none;border=
+-left:1pt solid rgb(204,204,204);padding:0in 0in 0in 6pt;margin-left:4.8pt;=
+margin-right:0in"><div><div><div><p class=3D"MsoNormal"><span style=3D"font=
+-size:11pt;font-family:Calibri,sans-serif;color:rgb(31,73,125)">Just lookin=
+g at the list of subsidies, Sebastian. I like identifying examples of posit=
+ive subsidies =E2=80=93 I akls wonder if we have examples of subsidy remova=
+l or reduction altogether? </span></p><p class=3D"MsoNormal"><span style=3D=
+"font-size:11pt;font-family:Calibri,sans-serif;color:rgb(31,73,125)">Additi=
+onally, one type set of examples of subsidies that have demonstrated positi=
+ve effects across a very large number of rigorous evaluations are social as=
+sistance subsidies =E2=80=93 or livelihood subsidies that are essentially c=
+onsumption subsidies. Sometimes general such as that provide conditional or=
+ unconditional cash, or sector specific such as for health, or infant nutri=
+tion, or for the elderly/pension, etc=E2=80=A6</span></p><p class=3D"MsoNor=
+mal"><span style=3D"font-size:11pt;font-family:Calibri,sans-serif;color:rgb=
+(31,73,125)">With all best</span></p><p class=3D"MsoNormal"><span style=3D"=
+font-size:11pt;font-family:Calibri,sans-serif;color:rgb(31,73,125)">Arun</s=
+pan></p><p class=3D"MsoNormal"><span style=3D"font-size:11pt;font-family:Ca=
+libri,sans-serif;color:rgb(31,73,125)">=C2=A0</span></p><p class=3D"MsoNorm=
+al"><span style=3D"font-size:11pt;font-family:Calibri,sans-serif;color:rgb(=
+31,73,125)">Professor, SEAS, University of Michigan, </span></p><p class=3D=
+"MsoNormal"><span style=3D"font-size:11pt;font-family:Calibri,sans-serif;co=
+lor:rgb(31,73,125)">Ann Arbor MI 48109 USA</span></p><p class=3D"MsoNormal"=
+><span style=3D"font-size:11pt;font-family:Calibri,sans-serif;color:rgb(31,=
+73,125)">734 647 5948</span></p><p class=3D"MsoNormal"><span style=3D"font-=
+size:11pt;font-family:Calibri,sans-serif;color:rgb(31,73,125)">=C2=A0</span=
+></p><p class=3D"MsoNormal"><b><span style=3D"font-size:11pt;font-family:Ca=
+libri,sans-serif">From:</span></b><span style=3D"font-size:11pt;font-family=
+:Calibri,sans-serif"> Sebastian Villasante &lt;<a href=3D"mailto:s.villasan=
+te.arg@gmail.com" target=3D"_blank">s.villasante.arg@gmail.com</a>&gt; <br>=
+<b>Sent:</b> Sunday, February 25, 2024 3:29 AM<br><b>To:</b> De: Rainer M K=
+rug &lt;<a href=3D"mailto:Rainer.Krug@senckenberg.de" target=3D"_blank">Rai=
+ner.Krug@senckenberg.de</a>&gt;; Victoria Reyes Garc=C3=ADa &lt;<a href=3D"=
+mailto:Victoria.Reyes@uab.cat" target=3D"_blank">Victoria.Reyes@uab.cat</a>=
+&gt;; Sebastian Villasante &lt;<a href=3D"mailto:s.villasante.arg@gmail.com=
+" target=3D"_blank">s.villasante.arg@gmail.com</a>&gt;; Sebasti=C3=A1n Vill=
+asante &lt;<a href=3D"mailto:sebastian.villasante@usc.es" target=3D"_blank"=
+>sebastian.villasante@usc.es</a>&gt;; Arun Agrawal &lt;<a href=3D"mailto:ar=
+unagra@umich.edu" target=3D"_blank">arunagra@umich.edu</a>&gt;; Aidin Niami=
+r &lt;<a href=3D"mailto:aidin.niamir@senckenberg.de" target=3D"_blank">aidi=
+n.niamir@senckenberg.de</a>&gt;; Renske Gudde &lt;<a href=3D"mailto:renske.=
+gudde@senckenberg.de" target=3D"_blank">renske.gudde@senckenberg.de</a>&gt;=
+<br><b>Subject:</b> Positive subsidy examples</span></p><p class=3D"MsoNorm=
+al">=C2=A0</p><div><p class=3D"MsoNormal">Hi all,</p><div><p class=3D"MsoNo=
+rmal">=C2=A0</p></div><div><p class=3D"MsoNormal">We really advanced and ag=
+reed with a solid list of=C2=A0keywords in the corpus of evidence and the s=
+ubsidy reforms. Thanks a lot Rainer for spending time to discuss it. Please=
+ see the<a href=3D"https://docs.google.com/spreadsheets/d/1ZKjKUiz1Di0b0CNU=
+SwRiOwom5K-0n1YHQ1qDbNXSEik/edit#gid=3D0" target=3D"_blank"> excel</a> with=
+ the current examples of positive subsidies.</p></div><div><p class=3D"MsoN=
+ormal">=C2=A0</p></div><div><p class=3D"MsoNormal">Aidin and I discussed th=
+at we can search for a sample of examples within the corpus of evidence by =
+starting with the examples from international organizations (UN, FAO, etc.)=
+. We will further discuss today and tomorrow and will back to you.</p></div=
+><div><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal">Ch=
+eers,=C2=A0</p></div><div><p class=3D"MsoNormal">=C2=A0</p></div><div><p cl=
+ass=3D"MsoNormal">Seba<br clear=3D"all"></p><div><div><div><div><div><div><=
+div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><=
+div><div><div><p class=3D"MsoNormal"><img border=3D"0" width=3D"94" height=
+=3D"96" style=3D"width: 0.9821in; height: 1in;" id=3D"m_-769599965184060569=
+9m_2579205784970241937m_2188507865721345860_x005f_x0000_i1025" src=3D"https=
+://ci3.googleusercontent.com/mail-sig/AIorK4yXuPHm7x5LCnZ_YWd3DiCOyWXklR71S=
+-jIB_-0R_i1lbpZgffCHEco-rNuAnWf4erOE816beQ"></p></div><div><p class=3D"MsoN=
+ormal">Sebastian Villasante</p></div><div><p class=3D"MsoNormal">**********=
+**************</p></div><div><p class=3D"MsoNormal">Director=C2=A0<a href=
+=3D"https://equalsea.eu/" target=3D"_blank">EqualSea Lab</a>=C2=A0I <a href=
+=3D"https://cretus.usc.es/" target=3D"_blank">CRETUS</a></p></div><div><p c=
+lass=3D"MsoNormal"><b><span style=3D"font-size:9pt;font-family:&quot;inheri=
+t&quot;,serif;color:rgb(36,36,36);border:1pt none windowtext;padding:0in"><=
+a href=3D"https://ipbes.net/" target=3D"_blank">IPBES Transformative Change=
+ Assessment=C2=A0</a></span></b></p></div><div><p class=3D"MsoNormal"><a hr=
+ef=3D"https://gulbenkian.pt/en/the-foundation/gulbenkian-prize-for-humanity=
+/" target=3D"_blank">IPBES 2022 Gulbenkian Prize for Humanity</a></p></div>=
+<div><p class=3D"MsoNormal"><a href=3D"https://pecs-science.org/ocean-equit=
+y-for-sustainable-futures/" target=3D"_blank">PECS Ocean Equity for Sustain=
+able Futures</a></p></div><div><p class=3D"MsoNormal"><b><span style=3D"fon=
+t-size:9pt;font-family:&quot;inherit&quot;,serif;color:rgb(36,36,36);border=
+:1pt none windowtext;padding:0in">Editor</span></b><span style=3D"font-size=
+:9pt;font-family:Calibri,sans-serif;color:black;border:1pt none windowtext;=
+padding:0in">=C2=A0</span><b><span style=3D"font-size:9pt;font-family:Calib=
+ri,sans-serif;color:blue;border:1pt none windowtext;padding:0in"><a href=3D=
+"https://www.springer.com/journal/13280" target=3D"_blank">AMBIO</a> </span=
+></b><span style=3D"font-size:9pt;font-family:Calibri,sans-serif;color:blac=
+k;border:1pt none windowtext;padding:0in">I </span><span style=3D"font-size=
+:9pt;font-family:Calibri,sans-serif;border:1pt none windowtext;padding:0in"=
+><a href=3D"https://www.tandfonline.com/journals/tbsm22" target=3D"_blank">=
+<b>Ecosystems and People </b></a><span style=3D"color:black">I=C2=A0</span>=
+<span style=3D"color:blue"><a href=3D"https://urldefense.com/v3/__https:/ww=
+w.nature.com/npjoceansustain/__;!!NVzLfOphnbDXSw!Cc-2LzpqratJpN13SgFu8hG-EY=
+fojaFFc37WN5Nt23-qG3WZp3gjR4NpV2ja4uRQ4O7KCObRwtzKc7YqVGYPQVg8V2CuWPQ$" tar=
+get=3D"_blank"><b>npj Ocean Sustainability</b></a>=C2=A0I</span><span style=
+=3D"color:black"> </span><b><u><span style=3D"color:blue">Marine Policy</sp=
+an></u><span style=3D"color:blue">=C2=A0</span></b></span></p></div><div><p=
+ class=3D"MsoNormal"><b><span style=3D"font-size:9pt;font-family:Calibri,sa=
+ns-serif;color:blue;border:1pt none windowtext;padding:0in"><img border=3D"=
+0" id=3D"m_-7695999651840605699m_2579205784970241937m_2188507865721345860_x=
+005f_x0000_i1026" src=3D"https://ci3.googleusercontent.com/mail-sig/AIorK4z=
+3JaI9WOuMJRWo2ClqlrL6p-Qzs7f8GuKWBaIAcFmRsDuEsKz94W3WLeynUMXy07AcZ09hqVY"><=
+/span></b></p></div><div><p class=3D"MsoNormal">University of Santiago de C=
+ompostela</p></div><div><p class=3D"MsoNormal">15782. A Coru=C3=B1a, Spain<=
+/p></div><div><p class=3D"MsoNormal">Tel. +34 981563 100 I Extension 24441<=
+/p></div><div><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNo=
+rmal">Karl-G=C3=B6ran M=C3=A4ler Scholar</p></div><div><p class=3D"MsoNorma=
+l">The Beijer Institute of Ecological Economics, Sweden</p></div><div><p cl=
+ass=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal">=C2=A0</p></d=
+iv><div><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal">=
+=C2=A0</p></div><div><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=
+=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal">=C2=A0</p></div>=
+<div><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"MsoNormal">=C2=
+=A0</p></div><div><p class=3D"MsoNormal">=C2=A0</p></div><div><p class=3D"M=
+soNormal" style=3D"margin-bottom:12pt">=C2=A0</p></div></div></div></div></=
+div></div></div></div></div></div></div></div></div></div></div></div></div=
+></div></div></div></div></div></div></div></div></div></div></div></div></=
+blockquote></div></div></div>
+</div></blockquote></div>
+
+--00000000000028585e061234cda0--
