@@ -2,7 +2,6 @@
 title: 'Report Assessment Ch5 Subsidies Reform'
 subtitle: 'Data Management Report'
 author:
-  - name: Rainer M Krug
   - name: 
         family: Krug
         given: Rainer M.    
@@ -75,12 +74,11 @@ st <- readLines(file.path("input", "R1.txt"))
 st <- st[71:length(st)]
 R1_st[[2]] <- paste(collapse = " ", st)
 
-# rm(st)
+rm(st)
 
 R2_st <- readLines(file.path("input", "R2.txt")) |>
     paste(collapse = " ")
 
-source(file.path("R", "functions.R"))
 ```
 
 ## Working Title
@@ -173,12 +171,12 @@ The corpus download will be stored in `data/pages` and the arrow database in `da
 
 This is not on github!
 
-The corpus can be read by running `get_corpus()` which o[pens the database so that then it can be fed into a `dplyr` pipeline. After most `dplyr` functions, the actual data needs to be collected via `collect()`.
+The corpus can be read by running `read_corpus()` which opens the database so that then it can be fed into a `dplyr` pipeline. After most `dplyr` functions, the actual data needs to be collected via `dplyr::collect()`.
 
 Only then is the actual data read!
 
 Needs to be enabled by setting `eval: true` in the code block below.
-TODO
+
 ```{r}
 #| label: get_subsidies_corpus
 #| eval: false
