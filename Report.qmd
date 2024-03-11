@@ -103,7 +103,7 @@ IPBES_TCA_Ch5_Subsidies_Reform
 
 
 
-# Step 1: Determination of numbers
+# Methods
 
 The search terms are based on the [shared google doc](https://docs.google.com/document/d/1_FmxYVhpv2Bu2Gbbxb7cWc49f3soFvc64Qau_x2RAqI){target=_blank}. They are cleaned up for the usage in [OpenAlex](https://openalex.org/){target=_blank}.
 
@@ -396,6 +396,32 @@ result <- pbapply::pblapply(
 toc()
 ```
 
+## Identify Works in Subsidies Corpus AND TCA corpus
+
+```{r}
+#| label: get_ids_subs_tca
+#| eval: false
+#|
+
+ids_subsidies <- read_corpus(file.path("data", "corpus")) |>
+    dplyr::select(id) |>
+    collect() |>
+    unlist()
+
+ids_tca <- read_corpus(file.path("..", "IPBES_TCA_Corpus", "data", "corpus")) |>
+    dplyr::select(id) |>
+    collect() |>
+    unlist()
+
+ids_subs_tca <- ids_tca[ids_tca %in% ids_subsidies]
+
+saveRDS(ids_subs_tca, file = file.path("data", "ids_subs_tca.rds"))
+```
+
+
+
+
+
 ## Export data for sentiment analysis
 
 ```{r}
@@ -407,6 +433,12 @@ read_corpus("data/corpus") |>
     dplyr::select(id, publication_year, ab) |>
     dplyr::collect() |>
     write.csv(file = "sent_analysis_subsidies.csv")
+
+read_corpus("data/corpus") |>
+    dplyr::select(id, publication_year, ab) |>
+    dplyr::collect() |>
+    dplyr::filter(id %in% readRDS("data/ids_subs_tca.rds")) |>
+    write.csv(file = "sent_analysis_subsidies_tca.csv")
 ```
 
 ## Export 50 random papers for manual analysis
@@ -424,23 +456,46 @@ read_corpus("data/corpus") |>
     dplyr::slice_sample(n = 50) |>
     dplyr::collect() |>
     writexl::write_xlsx(path = "random_50_subsidies.xlsx")
+
+set.seed(14)
+
+read_corpus("data/corpus") |>
+    dplyr::select(id, doi, author_abbr, display_name, ab) |>
+    dplyr::rename(abstract = ab, title = display_name) |>
+    dplyr::collect() |>
+    dplyr::filter(id %in% readRDS("data/ids_subs_tca.rds")) |>
+    dplyr::slice_sample(n = 50) |>
+    writexl::write_xlsx(path = "random_50_subsidies_in_tca.xlsx")
+
+
 ```
+
 
 
 # Results
 
 ### Number of hits
-- **R1:**: `r formatC(R1_count, format="f", big.mark=",", digits=0)` hits
-- **R2:** `r formatC(R2_count, format="f", big.mark=",", digits=0)` hits
-- **R1 AND R2:** `r formatC(R1_R2_count, format="f", big.mark=",", digits=0)` hits
 
-These are numbers which can easily be downloaded, either as a single set or several random sets.
+The number of hits are hits of the terms of the whoel OpenAlex corpus. Due to methodological issues, the number of `R1 AND R2` are overestimates and contain some double counting.
+
+- **`R1`:**: `r formatC(R1_count, format="f", big.mark=",", digits=0)` hits
+- **`R2`:** `r formatC(R2_count, format="f", big.mark=",", digits=0)` hits
+- **`R1 AND R2`:** `r formatC(R1_R2_count, format="f", big.mark=",", digits=0)` hits
+- **`R1 AND R2` and in TCA corpus:** `r formatC(length(readRDS("data/ids_subs_tca.rds")), format="f", big.mark=",", digits=0)` hits
+
 
 ### Manual review 50 paper
 
-The file contains the `id`, `doi`, `author_abbr` and `abstract` of the papers.
+The file contains the `id`, `doi`, `author_abbr` and `abstract` of the papers. Two samples were generated:
 
-The Excel file with a random sample of 50 papers can be downloded [here](random_50_subsidies.xlsx){target=_blank}. 
+- works in the subsidies corpus which can be downloded [here](random_50_subsidies.xlsx){target=_blank}. 
+- works in the subsidies corpus AND in the TCA corpus which can be downloded [here](random_50_subsidies_tca.xlsx){target=_blank}. 
+
 
 ### Sentiment analysis
-In Progress
+
+Two csv containing the `id`, `publication_year` and `ab' (abstract) were extracted:
+
+- works in the subsidies corpus which can be downloded [here](sent_analysis_subsidies.csv){target=_blank}. 
+- works in the subsidies corpus AND in the TCA corpus which can be downloded [here](sent_analysis_subsidies_tca.csv){target=_blank}. 
+

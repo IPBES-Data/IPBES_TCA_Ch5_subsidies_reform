@@ -3079,17 +3079,18 @@ vertical-align: -.125em;
   <ul>
   <li><a href="#working-title" id="toc-working-title" class="nav-link active" data-scroll-target="#working-title">Working Title</a></li>
   <li><a href="#code-repo" id="toc-code-repo" class="nav-link" data-scroll-target="#code-repo">Code repo</a></li>
-  <li><a href="#build-no-33" id="toc-build-no-33" class="nav-link" data-scroll-target="#build-no-33">Build No: 33</a></li>
+  <li><a href="#build-no-41" id="toc-build-no-41" class="nav-link" data-scroll-target="#build-no-41">Build No: 41</a></li>
   <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a>
   <ul>
   <li><a href="#the-following-steps-will-be-done-in-documented-in-this-report" id="toc-the-following-steps-will-be-done-in-documented-in-this-report" class="nav-link" data-scroll-target="#the-following-steps-will-be-done-in-documented-in-this-report">The following steps will be done in documented in this report:</a></li>
   </ul></li>
-  <li><a href="#step-1-determination-of-numbers" id="toc-step-1-determination-of-numbers" class="nav-link" data-scroll-target="#step-1-determination-of-numbers">Step 1: Determination of numbers</a>
+  <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
   <ul>
   <li><a href="#r1" id="toc-r1" class="nav-link" data-scroll-target="#r1">R1</a></li>
   <li><a href="#r2" id="toc-r2" class="nav-link" data-scroll-target="#r2">R2</a></li>
   <li><a href="#r1-and-r2" id="toc-r1-and-r2" class="nav-link" data-scroll-target="#r1-and-r2">R1 AND R2</a></li>
   <li><a href="#download-r1-and-r2-corpus" id="toc-download-r1-and-r2-corpus" class="nav-link" data-scroll-target="#download-r1-and-r2-corpus">Download <code>R1 AND R2</code> Corpus</a></li>
+  <li><a href="#identify-works-in-subsidies-corpus-and-tca-corpus" id="toc-identify-works-in-subsidies-corpus-and-tca-corpus" class="nav-link" data-scroll-target="#identify-works-in-subsidies-corpus-and-tca-corpus">Identify Works in Subsidies Corpus AND TCA corpus</a></li>
   <li><a href="#export-data-for-sentiment-analysis" id="toc-export-data-for-sentiment-analysis" class="nav-link" data-scroll-target="#export-data-for-sentiment-analysis">Export data for sentiment analysis</a></li>
   <li><a href="#export-50-random-papers-for-manual-analysis" id="toc-export-50-random-papers-for-manual-analysis" class="nav-link" data-scroll-target="#export-50-random-papers-for-manual-analysis">Export 50 random papers for manual analysis</a></li>
   </ul></li>
@@ -3166,8 +3167,8 @@ vertical-align: -.125em;
 <h2 class="anchored" data-anchor-id="code-repo">Code repo</h2>
 <p><a href="https://github.com/IPBES-Data/IPBES_TCA_Ch5_Subsidies_Reform">Github - private</a></p>
 </section>
-<section id="build-no-33" class="level2">
-<h2 class="anchored" data-anchor-id="build-no-33">Build No: 33</h2>
+<section id="build-no-41" class="level2">
+<h2 class="anchored" data-anchor-id="build-no-41">Build No: 41</h2>
 <p>%The BuidNo is automatically increased by one each time the report is rendered. It is used to indicate different renderings when the version stays the same%.</p>
 </section>
 <section id="introduction" class="level1">
@@ -3180,8 +3181,8 @@ vertical-align: -.125em;
 </ul>
 </section>
 </section>
-<section id="step-1-determination-of-numbers" class="level1">
-<h1>Step 1: Determination of numbers</h1>
+<section id="methods" class="level1">
+<h1>Methods</h1>
 <p>The search terms are based on the <a href="https://docs.google.com/document/d/1_FmxYVhpv2Bu2Gbbxb7cWc49f3soFvc64Qau_x2RAqI" target="_blank">shared google doc</a>. They are cleaned up for the usage in <a href="https://openalex.org/" target="_blank">OpenAlex</a>.</p>
 <section id="r1" class="level2">
 <h2 class="anchored" data-anchor-id="r1">R1</h2>
@@ -3468,17 +3469,46 @@ vertical-align: -.125em;
 </details>
 </div>
 </section>
-<section id="export-data-for-sentiment-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="export-data-for-sentiment-analysis">Export data for sentiment analysis</h2>
+<section id="identify-works-in-subsidies-corpus-and-tca-corpus" class="level2">
+<h2 class="anchored" data-anchor-id="identify-works-in-subsidies-corpus-and-tca-corpus">Identify Works in Subsidies Corpus AND TCA corpus</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#|</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">read_corpus</span>(<span class="st">&quot;data/corpus&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(id, publication_year, ab) <span class="sc">|&gt;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write.csv</span>(<span class="at">file =</span> <span class="st">&quot;sent_analysis_subsidies.csv&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>ids_subsidies <span class="ot">&lt;-</span> <span class="fu">read_corpus</span>(<span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;corpus&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(id) <span class="sc">|&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unlist</span>()</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>ids_tca <span class="ot">&lt;-</span> <span class="fu">read_corpus</span>(<span class="fu">file.path</span>(<span class="st">&quot;..&quot;</span>, <span class="st">&quot;IPBES_TCA_Corpus&quot;</span>, <span class="st">&quot;data&quot;</span>, <span class="st">&quot;corpus&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(id) <span class="sc">|&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unlist</span>()</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>ids_subs_tca <span class="ot">&lt;-</span> ids_tca[ids_tca <span class="sc">%in%</span> ids_subsidies]</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(ids_subs_tca, <span class="at">file =</span> <span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;ids_subs_tca.rds&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="export-data-for-sentiment-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="export-data-for-sentiment-analysis">Export data for sentiment analysis</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#|</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">read_corpus</span>(<span class="st">&quot;data/corpus&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(id, publication_year, ab) <span class="sc">|&gt;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write.csv</span>(<span class="at">file =</span> <span class="st">&quot;sent_analysis_subsidies.csv&quot;</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="fu">read_corpus</span>(<span class="st">&quot;data/corpus&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(id, publication_year, ab) <span class="sc">|&gt;</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(id <span class="sc">%in%</span> <span class="fu">readRDS</span>(<span class="st">&quot;data/ids_subs_tca.rds&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write.csv</span>(<span class="at">file =</span> <span class="st">&quot;sent_analysis_subsidies_tca.csv&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -3487,16 +3517,26 @@ vertical-align: -.125em;
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#|</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">13</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">read_corpus</span>(<span class="st">&quot;data/corpus&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(id, doi, author_abbr, display_name, ab) <span class="sc">|&gt;</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">rename</span>(<span class="at">abstract =</span> ab, <span class="at">title =</span> display_name) <span class="sc">|&gt;</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">slice_sample</span>(<span class="at">n =</span> <span class="dv">50</span>) <span class="sc">|&gt;</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    writexl<span class="sc">::</span><span class="fu">write_xlsx</span>(<span class="at">path =</span> <span class="st">&quot;random_50_subsidies.xlsx&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">#|</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">13</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">read_corpus</span>(<span class="st">&quot;data/corpus&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(id, doi, author_abbr, display_name, ab) <span class="sc">|&gt;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">rename</span>(<span class="at">abstract =</span> ab, <span class="at">title =</span> display_name) <span class="sc">|&gt;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">slice_sample</span>(<span class="at">n =</span> <span class="dv">50</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    writexl<span class="sc">::</span><span class="fu">write_xlsx</span>(<span class="at">path =</span> <span class="st">&quot;random_50_subsidies.xlsx&quot;</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">14</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="fu">read_corpus</span>(<span class="st">&quot;data/corpus&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(id, doi, author_abbr, display_name, ab) <span class="sc">|&gt;</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">rename</span>(<span class="at">abstract =</span> ab, <span class="at">title =</span> display_name) <span class="sc">|&gt;</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(id <span class="sc">%in%</span> <span class="fu">readRDS</span>(<span class="st">&quot;data/ids_subs_tca.rds&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">slice_sample</span>(<span class="at">n =</span> <span class="dv">50</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    writexl<span class="sc">::</span><span class="fu">write_xlsx</span>(<span class="at">path =</span> <span class="st">&quot;random_50_subsidies_in_tca.xlsx&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -3505,21 +3545,29 @@ vertical-align: -.125em;
 <h1>Results</h1>
 <section id="number-of-hits" class="level3">
 <h3 class="anchored" data-anchor-id="number-of-hits">Number of hits</h3>
+<p>The number of hits are hits of the terms of the whoel OpenAlex corpus. Due to methodological issues, the number of <code>R1 AND R2</code> are overestimates and contain some double counting.</p>
 <ul>
-<li><strong>R1:</strong>: 114,165 hits</li>
-<li><strong>R2:</strong> 34,393,211 hits</li>
-<li><strong>R1 AND R2:</strong> 40,870 hits</li>
+<li><strong><code>R1</code>:</strong>: 114,173 hits</li>
+<li><strong><code>R2</code>:</strong> 34,393,824 hits</li>
+<li><strong><code>R1 AND R2</code>:</strong> 40,872 hits</li>
+<li><strong><code>R1 AND R2</code> and in TCA corpus:</strong> 12,095 hits</li>
 </ul>
-<p>These are numbers which can easily be downloaded, either as a single set or several random sets.</p>
 </section>
 <section id="manual-review-50-paper" class="level3">
 <h3 class="anchored" data-anchor-id="manual-review-50-paper">Manual review 50 paper</h3>
-<p>The file contains the <code>id</code>, <code>doi</code>, <code>author_abbr</code> and <code>abstract</code> of the papers.</p>
-<p>The Excel file with a random sample of 50 papers can be downloded <a href="random_50_subsidies.xlsx" target="_blank">here</a>.</p>
+<p>The file contains the <code>id</code>, <code>doi</code>, <code>author_abbr</code> and <code>abstract</code> of the papers. Two samples were generated:</p>
+<ul>
+<li>works in the subsidies corpus which can be downloded <a href="random_50_subsidies.xlsx" target="_blank">here</a>.</li>
+<li>works in the subsidies corpus AND in the TCA corpus which can be downloded <a href="random_50_subsidies_tca.xlsx" target="_blank">here</a>.</li>
+</ul>
 </section>
 <section id="sentiment-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="sentiment-analysis">Sentiment analysis</h3>
-<p>In Progress</p>
+<p>Two csv containing the <code>id</code>, <code>publication_year</code> and `ab’ (abstract) were extracted:</p>
+<ul>
+<li>works in the subsidies corpus which can be downloded <a href="sent_analysis_subsidies.csv" target="_blank">here</a>.</li>
+<li>works in the subsidies corpus AND in the TCA corpus which can be downloded <a href="sent_analysis_subsidies_tca.csv" target="_blank">here</a>.</li>
+</ul>
 </section>
 </section>
 
