@@ -51,6 +51,7 @@ library(arrow)
 library(dplyr)
 library(IPBES.R)
 library(openalexR)
+library(ggplot2)
 
 if (!exists("params")) {
     params <- rmarkdown::yaml_front_matter("Report.qmd")$params
@@ -391,6 +392,19 @@ result <- pbapply::pblapply(
         )
     }
 )
+
+arrow_dir <- file.path(".", "data", "corpus_tca")
+
+read_corpus("data/corpus") |>
+    dplyr::collect() |>
+    dplyr::filter(id %in% readRDS("data/ids_subs_tca.rds")) |>
+    arrow::write_dataset(
+        path = arrow_dir,
+        partitioning = "publication_year",
+        format = "parquet",
+        existing_data_behavior = "overwrite"
+    )
+
 toc()
 ```
 
@@ -417,9 +431,6 @@ saveRDS(ids_subs_tca, file = file.path("data", "ids_subs_tca.rds"))
 ```
 
 
-
-
-
 ## Export data for sentiment analysis
 
 ```{r}
@@ -430,13 +441,12 @@ saveRDS(ids_subs_tca, file = file.path("data", "ids_subs_tca.rds"))
 read_corpus("data/corpus") |>
     dplyr::select(id, publication_year, ab) |>
     dplyr::collect() |>
-    write.csv(file = "sent_analysis_subsidies.csv")
+    write.table(file = "sent_analysis_subsidies.txt")
 
-read_corpus("data/corpus") |>
+read_corpus("data/corpus_tca") |>
     dplyr::select(id, publication_year, ab) |>
     dplyr::collect() |>
-    dplyr::filter(id %in% readRDS("data/ids_subs_tca.rds")) |>
-    write.csv(file = "sent_analysis_subsidies_tca.csv")
+    write.table(file = "sent_analysis_subsidies_tca.txt")
 ```
 
 ## Export 50 random papers for manual analysis
@@ -457,15 +467,12 @@ read_corpus("data/corpus") |>
 
 set.seed(14)
 
-read_corpus("data/corpus") |>
+read_corpus("data/corpus_tca") |>
     dplyr::select(id, doi, author_abbr, display_name, ab) |>
     dplyr::rename(abstract = ab, title = display_name) |>
-    dplyr::collect() |>
-    dplyr::filter(id %in% readRDS("data/ids_subs_tca.rds")) |>
     dplyr::slice_sample(n = 50) |>
+    dplyr::collect() |>
     writexl::write_xlsx(path = "random_50_subsidies_in_tca.xlsx")
-
-
 ```
 
 
@@ -494,6 +501,69 @@ The file contains the `id`, `doi`, `author_abbr` and `abstract` of the papers. T
 
 Two csv containing the `id`, `publication_year` and `ab' (abstract) were extracted:
 
-- works in the subsidies corpus which can be downloded [here](sent_analysis_subsidies.csv){target=_blank}. 
-- works in the subsidies corpus AND in the TCA corpus which can be downloded [here](sent_analysis_subsidies_tca.csv){target=_blank}. 
+- works in the subsidies corpus which can be downloded [here](sent_analysis_subsidies.txt){target=_blank}. 
+- works in the subsidies corpus AND in the TCA corpus which can be downloded [here](sent_analysis_subsidies_tca.txt){target=_blank}. 
 
+### Publications over time
+
+```{r}
+
+read_corpus(file.path("data", "corpus_tca")) |>
+    dplyr::select(publication_year) |>
+    arrange(publication_year) |>
+    dplyr::collect() |>
+    table() |>
+    as.data.frame() |>
+    mutate(
+        p = Freq / sum(Freq),
+        p_cum = cumsum(p)
+    ) |>
+    ggplot() +
+    geom_bar(aes(x = as.factor(publication_year), y = p), stat = "identity") +
+    labs(
+        title = "Publications over time",
+        x = "Year",
+        y = "Number of publications"
+    ) +
+    scale_x_discrete(breaks = seq(1970, 2020, 5)) +
+    theme_minimal()
+```
+
+### Map first author affiliation
+ Distribution of the first author affiliation countries
+ 
+```{r}
+dat <- read_corpus(file.path("data", "corpus_tca")) |>
+    dplyr::select(author) |>
+    collect()
+sapply(
+    dat$author,
+    function(x) {
+        auth <- ifelse(
+            is.na(x),
+            NA,
+            purrr::map(x, ~ .x |>
+                base64enc::base64decode() |>
+                unserialize())
+        )
+        if (is.na(auth)) {
+            return(NULL)
+        } else {
+            return(auth[[1]]$institution_country_code[[1]])
+        }
+    }
+) |>
+    unlist() |>
+    table() |>
+    as.data.frame() |>
+    rename(
+        iso2c = Var1,
+        n = Freq
+    ) |>
+    mutate(
+        log_n = log(n + 1)
+    ) |>
+    IPBES.R::map_country_codes(
+        values = "log_n"
+    )
+```
