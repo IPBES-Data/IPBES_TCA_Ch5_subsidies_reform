@@ -47,3 +47,8 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+data/corpus/*
+data/pages/*
+sent_analysis_subsidies.*
+
