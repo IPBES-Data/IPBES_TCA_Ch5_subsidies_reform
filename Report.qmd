@@ -496,7 +496,7 @@ The number of hits are hits of the terms of the whole of the OpenAlex corpus. Du
 
 The file contains the `id`, `doi`, `author_abbr` and `abstract` of the papers. Two samples were generated:
 
-- works in the subsidies corpus which can be downloded [here](random_50_subsidies.xlsx){target=_blank}. 
+<!-- - works in the subsidies corpus which can be downloded [here](random_50_subsidies.xlsx){target=_blank}.  -->
 - works in the subsidies corpus AND in the TCA corpus which can be downloded [here](random_50_subsidies_tca.xlsx){target=_blank}. 
 
 
@@ -504,7 +504,7 @@ The file contains the `id`, `doi`, `author_abbr` and `abstract` of the papers. T
 
 Two csv containing the `id`, `publication_year` and `ab' (abstract) were extracted:
 
-- works in the subsidies corpus which can be downloded [here](sent_analysis_subsidies.txt){target=_blank}. 
+<!-- - works in the subsidies corpus which can be downloded [here](sent_analysis_subsidies.txt){target=_blank}.  -->
 - works in the subsidies corpus AND in the TCA corpus which can be downloded [here](sent_analysis_subsidies_tca.txt){target=_blank}. 
 
 ### Publications over time
