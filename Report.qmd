@@ -106,7 +106,9 @@ IPBES_TCA_Ch5_Subsidies_Reform
 
 The search terms are based on the [shared google doc](https://docs.google.com/document/d/1_FmxYVhpv2Bu2Gbbxb7cWc49f3soFvc64Qau_x2RAqI){target=_blank}. They are cleaned up for the usage in [OpenAlex](https://openalex.org/){target=_blank}.
 
-## R1
+
+
+## `R1` count from OpenAlex
 
 The search terms is [R1](input/R1.txt){target=_blank}
 
@@ -128,7 +130,7 @@ R1_count <- sapply(
 ```
 
 
-## R2
+## `R2` count from OpenAlex
 
 The search terms is [R2](input/R2.txt){target=_blank}
 
@@ -143,7 +145,7 @@ R2_count <- openalexR::oa_fetch(
 )[, "count"]
 ```
 
-## R1 AND R2
+## `R1 AND R2` count from OpenAlex
 
 The search term is [R1](input/R1.txt){target=_blank} AND [R2](input/R2.txt){target=_blank}
 
@@ -408,11 +410,11 @@ read_corpus("data/corpus") |>
 toc()
 ```
 
+
 ## Identify Works in Subsidies Corpus AND TCA corpus
 
 ```{r}
 #| label: get_ids_subs_tca
-#| eval: false
 #|
 
 ids_subsidies <- read_corpus(file.path("data", "corpus")) |>
@@ -429,6 +431,7 @@ ids_subs_tca <- ids_tca[ids_tca %in% ids_subsidies]
 
 saveRDS(ids_subs_tca, file = file.path("data", "ids_subs_tca.rds"))
 ```
+
 
 
 ## Export data for sentiment analysis
@@ -481,12 +484,12 @@ read_corpus("data/corpus_tca") |>
 
 ### Number of hits
 
-The number of hits are hits of the terms of the whoel OpenAlex corpus. Due to methodological issues, the number of `R1 AND R2` are overestimates and contain some double counting.
+The number of hits are hits of the terms of the whole of the OpenAlex corpus. Due to methodological issues, the number of `R1 AND R2` are overestimates and contain some double counting.
 
-- **`R1`:**: `r formatC(R1_count, format="f", big.mark=",", digits=0)` hits
-- **`R2`:** `r formatC(R2_count, format="f", big.mark=",", digits=0)` hits
-- **`R1 AND R2`:** `r formatC(R1_R2_count, format="f", big.mark=",", digits=0)` hits
-- **`R1 AND R2` and in TCA corpus:** `r formatC(length(readRDS("data/ids_subs_tca.rds")), format="f", big.mark=",", digits=0)` hits
+- **`R1`** in OpenAlex: `r formatC(R1_count, format="f", big.mark=",", digits=0)` hits
+- **`R2`** in OpenAlex: `r formatC(R2_count, format="f", big.mark=",", digits=0)` hits
+- **`R1 AND R2`**: in OpenAlex `r formatC(R1_R2_count, format="f", big.mark=",", digits=0)` hits
+- **`R1 AND R2`** in TCA corpus: `r formatC(length(readRDS("data/ids_subs_tca.rds")), format="f", big.mark=",", digits=0)` hits
 
 
 ### Manual review 50 paper
