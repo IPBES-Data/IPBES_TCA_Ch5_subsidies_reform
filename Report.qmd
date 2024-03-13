@@ -757,3 +757,165 @@ To download high resolution, [click here](`r file.path("maps", "publications_cou
 data |> IPBES.R::table_dt(fn = "publications_per_country")
 rm(data)
 ```
+
+### Sentiment Analysis
+
+For analyzing the sentiments of the provided abstracts, we have used the Python NLTK package, and VADER (Valence Aware Dictionary for Sentiment Reasoning) which is an NLTK module that provides sentiment scores based on the words used. VADER is a pre-trained, rule-based sentiment analysis model in which the terms are generally labeled as per their semantic orientation as either positive or negative.
+
+The main advantage/reason for using this model was that it doesn't require a labbed training dataset.
+The output of the model is 4 statistical scores: 
+
+- **compound**: composite score that summarizes the overall sentiment of the text, where scores close to 1 indicate a positive sentiment, scores close to -1 indicate a negative sentiment, and scores close to 0 indicate a neutral sentiment
+- **negative**: percentage of negative sentiments in the text 
+- **neutral**: percentage of neutral sentiments in the text
+- **positive**: percentage of positive sentiments in the text
+
+```{r}
+readRDS("input/SentAnalysis_Scores.rds") |>
+    IPBES.R::table_dt(fn = "sentiment_scores", fixedColumns = list(leftColumns = 2))
+```
+
+#### Compound Sentiment over time
+
+This graphs shows the **compound score** of the sentiment analysis over time. It only 
+
+```{r}
+
+data <- readRDS("input/SentAnalysis_Scores.rds") |>
+    dplyr::group_by(year) |>
+    dplyr::summarize(
+        compound = mean(compound),
+        n = n()
+    ) |>
+    dplyr::filter(
+        n > 10
+    )
+
+figure <- data |>
+    ggplot2::ggplot() +
+    ggplot2::geom_line(ggplot2::aes(x = year, y = compound)) +
+    ggplot2::labs(
+        title = "Sentiment Analysis Compound Score (n > 10)",
+        x = "Year",
+        y = "Compound score"
+    ) +
+    ggplot2::theme_minimal()
+
+ggplot2::ggsave(
+    file.path("figures", "sentiments_over_time.pdf"),
+    width = 12,
+    height = 6,
+    figure
+)
+ggplot2::ggsave(
+    file.path("figures", "sentiments_over_time.png"),
+    width = 12,
+    height = 6,
+    figure
+)
+
+rm(figure)
+```
+
+![](`r file.path("figures", "sentiments_over_time.png")`)
+
+To download high resolution, [click here](`r file.path("figures", "sentiments_over_time.pdf")`){target="_blank"}
+
+```{r}
+data |> IPBES.R::table_dt(fn = "publications_per_country")
+rm(data)
+```
+
+#### Compound Sentiment per country
+
+```{r}
+data <- read_corpus(file.path("data", "corpus_tca")) |>
+    dplyr::select(id, author) |>
+    collect() |>
+    mutate(
+        author = IPBES.R::unserialize_arrow(author),
+        country_first_author = extract_authors(author)
+    ) |>
+    dplyr::left_join(
+        readRDS("input/SentAnalysis_Scores.rds"),
+        by = "id"
+    ) |>
+    group_by(country_first_author) |>
+    summarize(
+        mean_compound = mean(compound),
+        n = n()
+    ) |>
+    arrange(desc(mean_compound)) |>
+    rename(
+        iso2c = country_first_author
+    ) |>
+    mutate(
+        iso3c = countrycode::countrycode(
+            iso2c,
+            origin = "iso2c",
+            destination = "iso3c"
+        )
+    )
+
+map <- data |>
+    map_country_codes(
+        map_type = "countries",
+        values = "mean_compound",
+        geodata_path = gdm_dir
+    ) +
+    ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
+    ggplot2::ggtitle("Mean compound sentiment. -1: negative; 1: positive - all countries")
+
+map_sel <- data |>
+    dplyr::filter(n > 10) |>
+    map_country_codes(
+        map_type = "countries",
+        values = "mean_compound",
+        geodata_path = gdm_dir
+    ) +
+    ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
+    ggplot2::ggtitle("Mean compound sentiment. -1: negative; 1: positive - more than 10 works")
+
+ggplot2::ggsave(
+    file.path("maps", "sentiment_per_countries_all.pdf"),
+    width = 12,
+    height = 8,
+    map
+)
+ggplot2::ggsave(
+    file.path("maps", "sentiment_per_countries_all.png"),
+    width = 12,
+    height = 8,
+    map
+)
+
+ggplot2::ggsave(
+    file.path("maps", "sentiment_per_countries_10.pdf"),
+    width = 12,
+    height = 8,
+    map_sel
+)
+ggplot2::ggsave(
+    file.path("maps", "sentiment_per_countries_10.png"),
+    width = 12,
+    height = 8,
+    map_sel
+)
+
+rm(map)
+```
+
+![](`r file.path("maps", "sentiment_per_countries_all.png")`)
+
+To download high resolution, [click here](`r file.path("maps", "sentiment_per_countries_all.pdf")`){target="_blank"}
+
+![](`r file.path("maps", "sentiment_per_countries_10.png")`)
+
+To download high resolution, [click here](`r file.path("maps", "sentiment_per_countries_10.pdf")`){target="_blank"}
+
+In the table, all countries are included
+
+```{r}
+data |> IPBES.R::table_dt(fn = "sentiment_per_countries")
+rm(data)
+```
