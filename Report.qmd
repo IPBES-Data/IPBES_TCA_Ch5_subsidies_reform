@@ -775,6 +775,59 @@ readRDS("input/SentAnalysis_Scores.rds") |>
     IPBES.R::table_dt(fn = "sentiment_scores", fixedColumns = list(leftColumns = 2))
 ```
 
+#### Sentiments Over Time
+
+This graphs shows the sentiment scores of the sentiment analysis over time.
+
+```{r}
+data <- readRDS("input/SentAnalysis_Scores.rds") |>
+    dplyr::group_by(year) |>
+    dplyr::summarize(
+        neg = mean(neg),
+        neu = mean(neu),
+        pos = mean(pos),
+        compound = mean(compound),
+        n = n()
+    ) |>
+    dplyr::filter(
+        n > 10
+    )
+
+figure <- data |>
+    tidyr::pivot_longer(cols = c(neg, neu, pos, compound), names_to = "type", values_to = "value") |>
+    ggplot2::ggplot() +
+    ggplot2::geom_line(aes(x = year, y = value, color = type, linetype = type)) +
+    ggplot2::scale_color_manual(values = c("black", "red", "blue", "green")) +
+    ggplot2::labs(
+        title = "Sentiment Analysis Scores (n > 10)",
+        x = "Year",
+        y = "Score",
+        color = "Type",
+        linetype = "Type"
+    ) +
+    ggplot2::theme_minimal()
+
+
+ggplot2::ggsave(
+    file.path("figures", "sentiments_over_time.pdf"),
+    width = 12,
+    height = 6,
+    figure
+)
+ggplot2::ggsave(
+    file.path("figures", "sentiments_over_time.png"),
+    width = 12,
+    height = 6,
+    figure
+)
+
+rm(figure)
+```
+
+![](`r file.path("figures", "sentiments_over_time.png")`)
+
+To download high resolution, [click here](`r file.path("figures", "sentiments_over_time.pdf")`){target="_blank"}
+
 
 #### Negative Sentiment
 
