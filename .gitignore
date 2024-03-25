@@ -48,8 +48,10 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-data/corpus/*
-data/pages/*
+**/pages/*
+**/corpus/*
 sent_analysis_subsidies.zip
 
-data/corpus_tca/*
+**/corpus_tca/*
+**/corpus_tca.bak/*
+**/corpus.bak/*
