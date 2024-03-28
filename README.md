@@ -25,10 +25,10 @@ Once finalised, the final repo will be published on Zenodo
   - Rainer <Rainer.Krug@Senckenberg.de> <Rainer@krugs.de>
 
 - **email to**:
- 	- Arun Agrawal <arunagra@umich.edu>
- 	- Ram Pandit <ram.pandit@uwa.edu.au>
- 	- Victoria Reyes Garcia <Victoria.Reyes@uab.cat>
- 	- Karina Benessaiah <karinaben@gmail.com>
+  - Arun Agrawal <arunagra@umich.edu>
+  - Ram Pandit <ram.pandit@uwa.edu.au>
+  - Victoria Reyes Garcia <Victoria.Reyes@uab.cat>
+  - Karina Benessaiah <karinaben@gmail.com>
   - Rafael Almeida Magris <rafael.icmbio@gmail.com>,
   - Martha Bonilla <martha.bonilla@inecol.mx>,
   - Ram Pandit <ram.pandit@uwa.edu.au>,
@@ -58,4 +58,4 @@ Once finalised, the final repo will be published on Zenodo
 
 ## Reports
 
-- [Report](Report.html)
+- [Ch5_subsidies_reform Report](Ch5_subsidies_reform.html)

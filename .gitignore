@@ -55,3 +55,6 @@ sent_analysis_subsidies.zip
 **/corpus_tca/*
 **/corpus_tca.bak/*
 **/corpus.bak/*
+
+data/ch_5_subsidies_reform/sent_analysis_subsidies.parquet
+data/ch_5_subsidies_reform/sent_analysis_subsidies_tca.parquet
