@@ -193,7 +193,6 @@ Create Subsidies Corpus (filtered with TCA Corpus)
 
 ```{r}
 #| label: narrow_down_subsidies_corpus
-#| eval: false
 #|
 
 fn <- file.path("data", "ch_5_subsidies_reform", "ids_subs_tca.rds")
@@ -234,7 +233,6 @@ fn <- file.path("data", "ch_5_subsidies_reform", "sent_analysis_subsidies.parque
 if (!file.exists(fn)) {
     corpus_read(corpus_dir) |>
         dplyr::select(id, publication_year, ab) |>
-        dplyr::collect() |>
         arrow::write_parquet(fn)
 }
 
@@ -242,7 +240,6 @@ fn <- file.path("data", "ch_5_subsidies_reform", "sent_analysis_subsidies_tca.pa
 if (!file.exists(fn)) {
     read_corpus(corpus_tca_dir) |>
         dplyr::select(id, publication_year, ab) |>
-        dplyr::collect() |>
         arrow::write_parquet(fn)
 }
 ```
@@ -254,14 +251,14 @@ if (!file.exists(fn)) {
 #|
 
 
-fn <- file.path("data", "ch_5_subsidies_reform", "random_50_subsidies.xlsx")
+fn <- file.path("data", "ch_5_subsidies_reform", "random_250_subsidies_in_tca.xlsx")
 if (!file.exists(fn)) {
-    set.seed(13)
+    set.seed(15)
     read_corpus(corpus_dir) |>
         dplyr::select(id, doi, author_abbr, display_name, ab) |>
         dplyr::rename(abstract = ab, title = display_name) |>
         dplyr::collect() |>
-        dplyr::slice_sample(n = 50) |>
+        dplyr::slice_sample(n = 250) |>
         writexl::write_xlsx(path = fn)
 }
 
@@ -338,11 +335,10 @@ figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_over_
     ggplot() +
     #
     geom_bar(aes(x = publication_year, y = p), stat = "identity") +
-    geom_line(aes(x = publication_year, y = p_cum / 5), color = "red") +
-    geom_line(aes(x = publication_year, y = p_oa_cum / 5), color = "blue") +
+    geom_line(aes(x = publication_year, y = p_cum / 5, color = "Cumulative proportion"), size = 1) +
+    geom_line(aes(x = publication_year, y = p_oa_cum / 5, color = "Cumulative proportion OA"), size = 1) +
     #
-    geom_line(aes(x = publication_year, y = p_cum / 5), color = "red") +
-    geom_line(aes(x = publication_year, y = p_oa_cum / 5), color = "blue") +
+    scale_color_manual(values = c("Cumulative proportion" = "red", "Cumulative proportion OA" = "blue")) +
     #
     scale_x_continuous(breaks = seq(1900, 2020, 10)) +
     scale_y_continuous(
@@ -355,7 +351,10 @@ figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_over_
         y = "Number of publications"
     ) +
     theme_minimal() +
-    theme(axis.text.y.right = element_text(color = "red"))
+    theme(
+        axis.text.y.right = element_text(color = "red"),
+        legend.position = "inside" # Move the legend to the top
+    )
 
 ggplot2::ggsave(
     file.path("figures", "ch_5_subsidies_reform", "publications_over_time.pdf"),
