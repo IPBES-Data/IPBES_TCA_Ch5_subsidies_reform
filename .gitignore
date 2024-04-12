@@ -50,6 +50,10 @@ rsconnect/
 
 **/pages/*
 **/corpus/*
+**/corpus_authors/*
+**/corpus_topics/*
+**/corpus_before_deduplication/*
+
 sent_analysis_subsidies.zip
 
 **/corpus_tca/*
@@ -58,3 +62,5 @@ sent_analysis_subsidies.zip
 
 data/ch_5_subsidies_reform/sent_analysis_subsidies.parquet
 data/ch_5_subsidies_reform/sent_analysis_subsidies_tca.parquet
+
+input/ch_5_subsidies_reform/sectors_def.parquet

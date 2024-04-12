@@ -42,7 +42,17 @@ format:
             sidebar-width: 0px
             body-width: 4000px
             margin-width: 200px
-            gutter-width: 1.5rem     
+            gutter-width: 1.5rem
+params:
+    st_subsidies: !expr paste(readLines(file.path("input", "ch_5_subsidies_reform", "government_financial_support.txt")), collapse = " ")
+    gdm_dir: !expr file.path("data", "gdm_dir")
+    #
+    pages_dir: !expr file.path(".", "data", "ch_5_subsidies_reform", "pages")
+    #
+    corpus_dir: !expr file.path("data", "ch_5_subsidies_reform", "corpus")
+    corpus_authors_dir: !expr file.path("data", "ch_5_subsidies_reform", "corpus_authors")
+    corpus_topics_dir: !expr file.path("data", "ch_5_subsidies_reform", "corpus_topics")
+
 ---
 
 ```{r}
@@ -56,11 +66,12 @@ library(dplyr)
 library(IPBES.R)
 library(openalexR)
 library(ggplot2)
+library(duckdb)
+library(DBI)
 
-# if (!exists("params")) {
-#     params <- rmarkdown::yaml_front_matter("Ch5_subsidies_reform.qmd")$params
-# }
-
+if (!exists("params")) {
+    params <- rmarkdown::yaml_front_matter("Ch5_subsidies_reform.qmd")$params
+}
 
 build <- as.integer(readLines("buildNo"))
 build <- build + 1
@@ -68,20 +79,18 @@ writeLines(as.character(build), "buildNo")
 
 knitr::opts_chunk$set(message = NA)
 
+dir.create(params$gdm_dir, showWarnings = FALSE, recursive = TRUE)
 
-st <- readLines(file.path("input", "ch_5_subsidies_reform", "government_financial_support.txt")) |>
-    paste(collapse = " ")
-
-gdm_dir <- file.path("gdm_dir") # tempfile()
-dir.create(gdm_dir, showWarnings = FALSE, recursive = TRUE)
-
-pages_dir <- file.path(".", "data", "ch_5_subsidies_reform", "pages")
-corpus_dir <- file.path("data", "ch_5_subsidies_reform", "corpus")
-corpus_tca_dir <- file.path("data", "ch_5_subsidies_reform", "corpus_tca")
-
-# on.exit({
-#     unlink(gdm_dir, recursive = TRUE)
-# })
+st <- paste(
+    "(",
+    paste0(readLines(file.path("..", "IPBES_TCA_Corpus", "input", "tca_corpus", "search terms", "nature.txt")), collapse = "\n"),
+    ") AND (",
+    paste0(readLines(file.path("..", "IPBES_TCA_Corpus", "input", "tca_corpus", "search terms", "tfc.txt")), collapse = "\n"),
+    ") AND (",
+    params$st_subsidies,
+    ")"
+) |>
+    compact()
 ```
 
 ## Working Title
@@ -99,9 +108,10 @@ IPBES_TCA_Ch5_Subsidies_Reform
 
 ### The following steps will be done in documented in this report:
 
-- [ ] Do asearch with [st](input/ch_5_subsidies_refrm/government_financial_support.txt){target=_blank} determine the  number of hits
-- [ ] Download Subsidies Corpus
-- [ ] Identify works in the subsidies corpus AND TCA corpus
+- Do asearch with [params$st_subsidies](input/ch_5_subsidies_refrm/government_financial_support.txt){target=_blank} determine the  number of hits
+- Download Subsidies Corpus
+- Identify works in the subsidies corpus AND TCA corpus
+- Do some analysis
 
 
 
@@ -110,7 +120,7 @@ IPBES_TCA_Ch5_Subsidies_Reform
 The search terms are based on the [shared google doc](https://docs.google.com/document/d/1_FmxYVhpv2Bu2Gbbxb7cWc49f3soFvc64Qau_x2RAqI/edit){target=_blank}. They are cleaned up for the usage in [OpenAlex](https://openalex.org/){target=_blank}.
 
 
-## `government_financial_support` count from OpenAlex
+## Get and calculate Data from OpenAlex
 
 The search terms is [st](input/ch_5_subsidies_refrm/government_financial_support.txt){target=_blank}
 
@@ -122,7 +132,7 @@ fn <- file.path("data", "ch_5_subsidies_reform", "st_count.rds")
 
 if (!file.exists(fn)) {
     st_count <- openalexR::oa_fetch(
-        title_and_abstract.search = compact(st),
+        title_and_abstract.search = st,
         count_only = TRUE,
         verbose = TRUE
     )[, "count"]
@@ -135,7 +145,9 @@ if (!file.exists(fn)) {
 
 
 
-## Download Corpus
+## Download Subsidies Corpus
+
+**The Subsidies Corpus was downloaded at the 11th of April 2024.**
 
 The corpus download will be stored in `data/pages` and the arrow database in `data/corpus`.
 
@@ -155,12 +167,12 @@ Needs to be enabled by setting `eval: true` in the code block below.
 tic()
 
 IPBES.R::corpus_download(
-    pages_dir = pages_dir,
-    title_and_abstract_search = compact(st),
+    pages_dir = params$pages_dir,
+    title_and_abstract_search = st,
     continue = TRUE,
     delete_pages_dir = FALSE,
     set_size = 1000,
-    verbose = FALSE,
+    verbose = TRUE,
     dry_run = TRUE,
     mc_cores = 6
 )
@@ -177,8 +189,8 @@ Convert downloaded corpus to arrow
 tic()
 
 IPBES.R::corpus_pages_to_arrow(
-    pages_dir = pages_dir,
-    arrow_dir = corpus_dir,
+    pages_dir = params$pages_dir,
+    arrow_dir = params$corpus_dir,
     continue = TRUE,
     delete_arrow_dir = FALSE,
     dry_run = FALSE,
@@ -189,40 +201,73 @@ IPBES.R::corpus_pages_to_arrow(
 toc()
 ```
 
-Create Subsidies Corpus (filtered with TCA Corpus)
+Check the number of dulicates before running this next block, and then verify the new corpus afterwards. RUN ONLY MANUALY!
 
 ```{r}
-#| label: narrow_down_subsidies_corpus
+#| label: fix_duplicate_ids_TEMPORARY
+#| eval: false
 #|
 
-fn <- file.path("data", "ch_5_subsidies_reform", "ids_subs_tca.rds")
-if (!file.exists(fn)) {
-    ids_subsidies <- read_corpus(corpus_dir) |>
-        dplyr::select(id) |>
-        collect() |>
-        unlist()
+ONLY RUN MANUALLY!!!!!!!!!!!!!!!!!!!!!!!
 
-    ids_tca <- read_corpus(file.path("..", "IPBES_TCA_Corpus", "data", "tca_corpus", "corpus")) |>
-        dplyr::select(id) |>
-        collect() |>
-        unlist()
+(read_corpus("./data/ch_5_subsidies_reform/corpus") |> group_by(id) |> summarize(n = n()) |> filter(n > 1) |> collect() |> nrow()) / (corpus_read("./data/ch_5_subsidies_reform/corpus") |> nrow())
 
-    ids_subs_tca <- ids_tca[ids_tca %in% ids_subsidies]
+years <- IPBES.R::corpus_read(params$corpus_dir) |>
+    distinct(publication_year) |>
+    collect() |>
+    unlist() |>
+    as.vector() |>
+    sort()
 
-    corpus_filter_ids(
-        arrow_dir = corpus_dir,
-        arrow_filter_dir = file.path(".", "data", "ch_5_subsidies_reform", "corpus_tca"),
-        filter_ids = ids_subs_tca
-    )
+lapply(
+    years,
+    function(y) {
+        message("\nProcessing year: ", y)
+        tic()
+        dataset <- IPBES.R::corpus_read(params$corpus_dir) |>
+            dplyr::filter(publication_year == y) |>
+            dplyr::collect() |>
+            group_by(id) |>
+            slice_max(
+                publication_year,
+                n = 1,
+                with_ties = FALSE,
+                na_rm = TRUE
+            )
+        # unlink(
+        #     file.path(params$corpus_dir, paste0("publication_year=", y)),
+        #     recursive = TRUE,
+        #     force = TRUE
+        # )
+        arrow::write_dataset(
+            dataset = dataset,
+            path = paste0(params$corpus_dir, "_deduplicated"),
+            partitioning = c("publication_year", "set"),
+            format = "parquet",
+            existing_data_behavior = "overwrite"
+        )
+        toc()
+    }
+)
 
-    saveRDS(ids_subs_tca, file = fn)
-} else {
-    ids_subs_tca <- readRDS(fn)
-}
+(read_corpus("./data/ch_5_subsidies_reform/corpus_deduplicated") |> group_by(id) |> summarize(n = n()) |> filter(n > 1) |> collect() |> nrow()) / (corpus_read("./data/ch_5_subsidies_reform/corpus_deduplicated") |> nrow())
+
+id_org <- corpus_read("./data/ch_5_subsidies_reform/corpus") |>
+    distinct(id) |>
+    collect()
+
+id_deduplicated <- corpus_read("./data/ch_5_subsidies_reform/corpus_deduplicated") |>
+    distinct(id) |>
+    collect()
+
+(!(id_deduplicated$id %in% id_org$id)) |> sum() |> as.numeric()
+
+NOW IF EVErYTHING IS OK, DELETE THE OLD CORPUS AND RENAME THE NEW ONE
 ```
 
+## Export Data from Subsidies Corpus
 
-## Export data for sentiment analysis
+### Export data for sentiment analysis
 
 
 ```{r}
@@ -231,34 +276,30 @@ if (!file.exists(fn)) {
 
 fn <- file.path("data", "ch_5_subsidies_reform", "sent_analysis_subsidies.parquet")
 if (!file.exists(fn)) {
-    corpus_read(corpus_dir) |>
-        dplyr::select(id, publication_year, ab) |>
-        arrow::write_parquet(fn)
-}
-
-fn <- file.path("data", "ch_5_subsidies_reform", "sent_analysis_subsidies_tca.parquet")
-if (!file.exists(fn)) {
-    read_corpus(corpus_tca_dir) |>
+    read_corpus(params$corpus_dir) |>
         dplyr::select(id, publication_year, ab) |>
         arrow::write_parquet(fn)
 }
 ```
 
-## Export 50 random papers for manual analysis
+### Export 50 random papers for manual analysis
 
 ```{r}
-#| label: export_random_50
+#| label: export_random
 #|
 
 
 fn <- file.path("data", "ch_5_subsidies_reform", "random_250_subsidies_in_tca.xlsx")
 if (!file.exists(fn)) {
     set.seed(15)
-    read_corpus(corpus_dir) |>
+    read_corpus(params$corpus_dir) |>
         dplyr::select(id, doi, author_abbr, display_name, ab) |>
         dplyr::rename(abstract = ab, title = display_name) |>
         dplyr::collect() |>
         dplyr::slice_sample(n = 250) |>
+        dplyr::mutate(
+            abstract = substr(abstract, 1, 5000)
+        ) |>
         writexl::write_xlsx(path = fn)
 }
 
@@ -266,14 +307,166 @@ if (!file.exists(fn)) {
 fn <- file.path("data", "ch_5_subsidies_reform", "random_50_subsidies_in_tca.xlsx")
 if (!file.exists(fn)) {
     set.seed(13)
-    read_corpus(corpus_tca_dir) |>
+    read_corpus(params$corpus_dir) |>
         dplyr::select(id, doi, author_abbr, display_name, ab) |>
         dplyr::rename(abstract = ab, title = display_name) |>
         dplyr::collect() |>
         dplyr::slice_sample(n = 50) |>
+        dplyr::mutate(
+            abstract = substr(abstract, 1, 5000)
+        ) |>
         writexl::write_xlsx(path = fn)
 }
 ```
+
+
+### Topics and Sectors
+
+The Sectors definition is based on the subfields assigned to each work by OpenAlex. 
+These were grouped by experts into sectors. See [this Google Doc](https://docs.google.com/spreadsheets/d/1ZCB_St2TQu_wL3yl1iN7Wxz5FERGxk-GZA0_2oGcRM0/edit#gid=210658071) for details.
+
+```{r}
+#| label: topics_corpus_data
+#|
+
+if (!dir.exists(params$corpus_topics_dir)) {
+    con <- duckdb::dbConnect(duckdb::duckdb(), read_only = FALSE)
+
+    corpus_read(params$corpus_dir) |>
+        arrow::to_duckdb(table_name = "corpus", con = con) |>
+        invisible()
+    corpus_read(file.path("input", "ch_5_subsidies_reform", "sectors_def.parquet")) |>
+        arrow::to_duckdb(table_name = "sectors", con = con) |>
+        invisible()
+
+    paste0(
+        "CREATE VIEW corpus_unnest AS ",
+        "SELECT  ",
+        "corpus.id AS work_id,  ",
+        "corpus.publication_year AS publication_year,  ",
+        "UNNEST(topics).i AS i,  ",
+        "UNNEST(topics).score AS score,  ",
+        "UNNEST(topics).name AS name, ",
+        "UNNEST(topics).id AS id,  ",
+        "UNNEST(topics).display_name AS display_name  ",
+        "FROM  ",
+        "corpus "
+    ) |>
+        dbExecute(conn = con)
+
+    select_sql <- paste0(
+        "SELECT ",
+        "corpus_unnest.*, ",
+        "sectors.sector ",
+        "FROM ",
+        "corpus_unnest ",
+        "LEFT JOIN ",
+        "sectors ",
+        "ON ",
+        "corpus_unnest.id  == sectors.id "
+    )
+
+    # dbGetQuery(con, paste(select_sql, "LIMIT 10"))
+
+    sql <- paste0(
+        "COPY ( ",
+        select_sql,
+        ") TO '", params$corpus_topics_dir, "' ",
+        "(FORMAT PARQUET, COMPRESSION 'SNAPPY', PARTITION_BY 'publication_year')"
+    )
+
+    dbExecute(con, sql)
+
+    duckdb::dbDisconnect(con, shutdown = TRUE)
+}
+```
+
+
+### Authors
+
+```{r}
+#| label: authors_tca_corpus_data
+#|
+
+if (!dir.exists(params$corpus_authors_dir)) {
+    con <- duckdb::dbConnect(duckdb::duckdb(), read_only = FALSE)
+
+    corpus_read(params$corpus_dir) |>
+        arrow::to_duckdb(table_name = "corpus", con = con) |>
+        invisible()
+
+
+    paste0(
+        "CREATE VIEW corpus_unnest AS ",
+        "SELECT  ",
+        "corpus.id AS work_id,  ",
+        "corpus.publication_year AS publication_year,  ",
+        "UNNEST(author).au_id AS au_id,  ",
+        "UNNEST(author).au_display_name AS au_display_name, ",
+        "UNNEST(author).au_orcid AS au_orcid,  ",
+        "UNNEST(author).author_position AS author_position,  ",
+        "UNNEST(author).is_corresponding AS is_corresponding,  ",
+        "UNNEST(author).au_affiliation_raw AS au_affiliation_raw,  ",
+        "UNNEST(author).institution_id AS institution_id,  ",
+        "UNNEST(author).institution_display_name AS institution_display_name,  ",
+        "UNNEST(author).institution_ror AS institution_ror,  ",
+        "UNNEST(author).institution_country_code AS institution_country_code,  ",
+        "UNNEST(author).institution_type AS institution_type,  ",
+        "UNNEST(author).institution_lineage AS institution_lineage  ",
+        "FROM  ",
+        "corpus "
+    ) |> dbExecute(conn = con)
+
+    paste0(
+        "COPY ( ",
+        "SELECT * FROM corpus_unnest ",
+        ") TO '", params$corpus_authors_dir, "' ",
+        "(FORMAT PARQUET, COMPRESSION 'SNAPPY', PARTITION_BY 'publication_year')"
+    ) |>
+        dbExecute(conn = con)
+
+    duckdb::dbDisconnect(con, shutdown = TRUE)
+
+    ###################################
+
+    # dir.create(params$corpus_authors_dir, showWarnings = FALSE)
+
+    # years <- IPBES.R::corpus_read(params$corpus_dir) |>
+    #     distinct(publication_year) |>
+    #     collect() |>
+    #     unlist() |>
+    #     as.vector() |>
+    #     sort()
+
+    # pbmcapply::pbmclapply(
+    #     years,
+    #     function(y) {
+    #         message("\nProcessing year: ", y)
+    #         IPBES.R::corpus_read(params$corpus_dir) |>
+    #             dplyr::filter(publication_year == y) |>
+    #             dplyr::select(
+    #                 id,
+    #                 publication_year,
+    #                 author
+    #             ) |>
+    #             collect() |>
+    #             IPBES.R::extract_authors(
+    #                 positions = TRUE
+    #             ) |>
+    #             arrow::write_dataset(
+    #                 path = params$corpus_authors_dir,
+    #                 partitioning = c("publication_year"),
+    #                 format = "parquet",
+    #                 existing_data_behavior = "overwrite"
+    #             )
+    #     },
+    #     mc.cores = 3,
+    #     mc.preschedule = FALSE
+    # )
+}
+```
+
+
 
 
 ## Publications over time
@@ -284,7 +477,7 @@ if (!file.exists(fn)) {
 fn <- file.path("data", "ch_5_subsidies_reform", "publications_over_time.rds")
 
 if (!file.exists(fn)) {
-    data <- read_corpus(corpus_tca_dir) |>
+    data <- read_corpus(params$corpus_dir) |>
         dplyr::select(publication_year) |>
         dplyr::arrange(publication_year) |>
         dplyr::collect() |>
@@ -318,7 +511,7 @@ if (!file.exists(fn)) {
                     p_oa = count_oa / sum(count_oa),
                     p_oa_cum = cumsum(p_oa)
                 )
-        ) 
+        )
 
     saveRDS(data, fn)
 }
@@ -329,49 +522,49 @@ if (!file.exists(fn)) {
 #| label: publications_over_time_figure
 #|
 if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), pattern = "publications_over_time")) < 2) {
+    figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_over_time.rds")) |>
+        dplyr::filter(publication_year >= 1900) |>
+        ggplot() +
+        #
+        geom_bar(aes(x = publication_year, y = p), stat = "identity") +
+        geom_line(aes(x = publication_year, y = p_cum / 5, color = "Cumulative proportion"), linewidth = 1) +
+        geom_line(aes(x = publication_year, y = p_oa_cum / 5, color = "Cumulative proportion OA"), linewidth = 1) +
+        #
+        scale_color_manual(values = c("Cumulative proportion" = "red", "Cumulative proportion OA" = "blue")) +
+        #
+        scale_x_continuous(breaks = seq(1900, 2020, 10)) +
+        scale_y_continuous(
+            "Proportion of publications",
+            sec.axis = sec_axis(~ . * 5, name = "Cumulative proportion") # divide by 100 to scale back the secondary axis
+        ) +
+        labs(
+            title = "Publications over time",
+            x = "Year",
+            y = "Number of publications"
+        ) +
+        theme_minimal() +
+        theme(
+            axis.text.y.right = element_text(color = "red"),
+            legend.position = "inside" # Move the legend to the top
+        )
 
-figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_over_time.rds")) |>
-    dplyr::filter(publication_year >= 1900) |>
-    ggplot() +
-    #
-    geom_bar(aes(x = publication_year, y = p), stat = "identity") +
-    geom_line(aes(x = publication_year, y = p_cum / 5, color = "Cumulative proportion"), size = 1) +
-    geom_line(aes(x = publication_year, y = p_oa_cum / 5, color = "Cumulative proportion OA"), size = 1) +
-    #
-    scale_color_manual(values = c("Cumulative proportion" = "red", "Cumulative proportion OA" = "blue")) +
-    #
-    scale_x_continuous(breaks = seq(1900, 2020, 10)) +
-    scale_y_continuous(
-        "Proportion of publications",
-        sec.axis = sec_axis(~ . * 5, name = "Cumulative proportion") # divide by 100 to scale back the secondary axis
-    ) +
-    labs(
-        title = "Publications over time",
-        x = "Year",
-        y = "Number of publications"
-    ) +
-    theme_minimal() +
-    theme(
-        axis.text.y.right = element_text(color = "red"),
-        legend.position = "inside" # Move the legend to the top
+    ggplot2::ggsave(
+        file.path("figures", "ch_5_subsidies_reform", "publications_over_time.pdf"),
+        width = 12,
+        height = 6,
+        figure
+    )
+    ggplot2::ggsave(
+        file.path("figures", "ch_5_subsidies_reform", "publications_over_time.png"),
+        width = 12,
+        height = 6,
+        figure
     )
 
-ggplot2::ggsave(
-    file.path("figures", "ch_5_subsidies_reform", "publications_over_time.pdf"),
-    width = 12,
-    height = 6,
-    figure
-)
-ggplot2::ggsave(
-    file.path("figures", "ch_5_subsidies_reform", "publications_over_time.png"),
-    width = 12,
-    height = 6,
-    figure
-)
-
-rm(figure)
+    rm(figure)
 }
 ```
+
 ## Countries of Authors Spatial
 
 
@@ -382,71 +575,116 @@ rm(figure)
 fn <- file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds")
 
 if (!file.exists(fn)) {
-    authors <- IPBES.R::corpus_read(corpus_tca_dir) |>
-        dplyr::select(author) |>
-        collect() |>
-        unlist() |>
-        IPBES.R::unserialize_arrow()
+    corpus <- corpus_read(params$corpus_authors_dir)
 
-
-    data_first <- authors |>
-        IPBES.R::extract_countries(first_only = TRUE) |>
-        dplyr::group_by(cc) |>
-        dplyr::summarise(count = sum(weight)) |>
-        rename(
-            iso2c = cc,
-            count_first = count
-        )
-
-    data <- authors |>
-        IPBES.R::extract_countries(first_only = FALSE) |>
-        dplyr::group_by(cc) |>
-        dplyr::summarise(count = sum(weight)) |>
-        rename(
-            iso2c = cc,
-            count_all = count
+    data_first <- corpus |>
+        dplyr::filter(
+            author_position == "first"
         ) |>
-        dplyr::full_join(
-            x = data_first,
-            by = "iso2c"
+        dplyr::select(
+            work_id,
+            institution_country_code,
+        ) |>
+        dplyr::group_by(
+            work_id,
+            institution_country_code
+        ) |>
+        dplyr::summarise(
+            count_first = 1 / n(),
+            .groups = "drop"
+        ) |>
+        dplyr::group_by(
+            institution_country_code
+        ) |>
+        dplyr::summarise(
+            count = sum(count_first),
+            .groups = "drop"
+        ) |>
+        dplyr::mutate(
+            position = "first"
         )
 
-    rm(data_first, authors)
+    data_all <- corpus |>
+        dplyr::select(
+            work_id,
+        ) |>
+        dplyr::group_by(
+            work_id,
+        ) |>
+        dplyr::summarize(
+            count = n()
+        ) |>
+        dplyr::right_join(
+            y = corpus |>
+                dplyr::select(
+                    work_id,
+                    institution_country_code
+                ),
+            by = "work_id"
+        ) |>
+        dplyr::group_by(
+            institution_country_code
+        ) |>
+        dplyr::summarise(
+            count = sum(count),
+            .groups = "drop"
+        ) |>
+        dplyr::mutate(
+            position = "all"
+        )
 
-    data$iso3c <- countrycode::countrycode(
-        data$iso2c,
-        origin = "iso2c",
-        destination = "iso3c"
-    )
 
     data_oa <- openalexR::oa_fetch(
         group_by = "authorships.countries",
         output = "tibble",
         verbose = FALSE
     ) |>
-        rename(count_oa = count)
-
-    data_oa$iso3c <- countrycode::countrycode(
-        data_oa$key_display_name,
-        origin = "country.name",
-        destination = "iso3c"
-    )
-
-    data_oa <- data_oa |>
-        mutate(
+        dplyr::mutate(
+            iso3c = countrycode::countrycode(
+                key_display_name,
+                origin = "country.name",
+                destination = "iso3c"
+            ),
             key_display_name = NULL,
-            key = NULL
+            key = NULL,
+            position = "oa"
         )
 
-    data |>
-        mutate(
-            iso2c = NULL
+    dplyr::add_row(
+        collect(data_first),
+        collect(data_all)
+    ) |>
+        dplyr::mutate(
+            iso3c = countrycode::countrycode(
+                institution_country_code,
+                origin = "iso2c",
+                destination = "iso3c"
+            ),
+            institution_country_code = NULL
         ) |>
-        dplyr::full_join(
-            y = data_oa,
-            by = "iso3c"
+        dplyr::add_row(
+            data_oa
         ) |>
-        mutate(
+        saveRDS(file = fn)
+
+    rm(data_first, data_all, data_oa, fn)
+}
+```
+
+
+```{r}
+#| label: publications_per_country_author_map
+#|
+
+if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern = "publications_countries")) < 2) {
+    data <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds")) |>
+        dplyr::group_by(iso3c) |>
+        dplyr::summarize(
+            count_first = sum(count[position == "first"], na.rm = TRUE),
+            count_all = sum(count[position == "all"], na.rm = TRUE),
+            count_oa = sum(count[position == "oa"], na.rm = TRUE)
+        ) |>
+        dplyr::mutate(
             count_oa = ifelse(is.na(count_oa), 0, count_oa),
             log_count_oa = log(count_oa + 1),
             p_oa = count_oa / sum(count_oa),
@@ -462,31 +700,15 @@ if (!file.exists(fn)) {
             p_all = count_all / sum(count_all),
             p_all_output = count_all / count_oa,
             p_all_diff = (p_oa - p_all) * 100,
-        ) |>
-        dplyr::arrange(
-            iso3c
-        ) |>
-        dplyr::relocate(
-            iso3c,
-            everything()
-        ) |>
-        saveRDS(file = fn)
-}
-```
+        )
 
-
-```{r}
-#| label: publications_per_country_author_map
-#|
-
-if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern = "publications_countries")) < 2) {
-    data <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds"))
+    # data <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds"))
 
     map <- patchwork::wrap_plots(
         data |> map_country_codes(
             map_type = "countries",
             values = "count_oa",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", high = "#56B4E9") +
             ggplot2::ggtitle("count of overall publications (count_oa)"),
@@ -494,7 +716,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         data |> map_country_codes(
             map_type = "countries",
             values = "count_first",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", high = "#56B4E9") +
             ggplot2::ggtitle("count of TCA publications (count_first)"),
@@ -502,7 +724,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         data |> map_country_codes(
             map_type = "countries",
             values = "count_all",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", high = "#56B4E9") +
             ggplot2::ggtitle("count of TCA publications (count_all)"),
@@ -510,7 +732,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         data |> map_country_codes(
             map_type = "countries",
             values = "log_count_oa",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", high = "#56B4E9") +
             ggplot2::ggtitle("log(count + 1) of overall publications (log_count_oa)"),
@@ -518,7 +740,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         data |> map_country_codes(
             map_type = "countries",
             values = "log_count_first",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", high = "#56B4E9") +
             ggplot2::ggtitle("log(count + 1) of TCA publications (log_count_first)"),
@@ -526,7 +748,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         data |> map_country_codes(
             map_type = "countries",
             values = "log_count_all",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", high = "#56B4E9") +
             ggplot2::ggtitle("log(count + 1) of TCA publications (log_count_all)"),
@@ -534,7 +756,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         data |> map_country_codes(
             map_type = "countries",
             values = "p_oa",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", high = "#56B4E9") +
             ggplot2::ggtitle("Overall research output (p_oa)"),
@@ -542,7 +764,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         data |> map_country_codes(
             map_type = "countries",
             values = "p_first",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", high = "#56B4E9") +
             ggplot2::ggtitle("TCA research output (p_first)"),
@@ -550,7 +772,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         data |> map_country_codes(
             map_type = "countries",
             values = "p_all",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", high = "#56B4E9") +
             ggplot2::ggtitle("TCA research output (p_all)"),
@@ -561,7 +783,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
             map_country_codes(
                 map_type = "countries",
                 values = "p_first_diff",
-                geodata_path = gdm_dir
+                geodata_path = params$gdm_dir
             ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
             ggplot2::ggtitle("difference (TCA - overall) output (p_oa - p_first)"),
@@ -570,7 +792,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
             map_country_codes(
                 map_type = "countries",
                 values = "p_all_diff",
-                geodata_path = gdm_dir
+                geodata_path = params$gdm_dir
             ) +
             ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
             ggplot2::ggtitle("difference (TCA - overall) output (p_oa - p_all)"),
@@ -604,7 +826,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
 fn <- file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_countries.rds")
 
 if (!file.exists(fn)) {
-    data <- read_corpus(corpus_tca_dir) |>
+    data <- read_corpus(params$corpus_dir) |>
         dplyr::select(id, author) |>
         collect() |>
         mutate(
@@ -621,7 +843,7 @@ if (!file.exists(fn)) {
             iso2c = NULL
         ) |>
         dplyr::left_join(
-            readRDS(file.path("input", "ch_5_subsidies_reform", "SentAnalysis_Scores.rds")),
+            read.csv(file.path("input", "ch_5_subsidies_reform", "sent_analysis_subsidies.csv")),
             by = "id"
         ) |>
         dplyr::group_by(iso3c) |>
@@ -651,7 +873,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         map_country_codes(
             map_type = "countries",
             values = "mean_neu",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
         ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
         ggplot2::ggtitle("Mean neutral sentiment (0 - 1) - all countries")
@@ -661,7 +883,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         map_country_codes(
             map_type = "countries",
             values = "mean_neu",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
         ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
         ggplot2::ggtitle("Mean neutral sentiment (0 - 1) - more than 10 works")
@@ -708,7 +930,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         map_country_codes(
             map_type = "countries",
             values = "mean_pos",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
         ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
         ggplot2::ggtitle("Mean positive sentiment (0 - 1) - all countries")
@@ -718,7 +940,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         map_country_codes(
             map_type = "countries",
             values = "mean_pos",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
         ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
         ggplot2::ggtitle("Mean positive sentiment (0 - 1) - more than 10 works")
@@ -763,7 +985,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         map_country_codes(
             map_type = "countries",
             values = "mean_neg",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
         ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
         ggplot2::ggtitle("Mean negative sentiment (0 - 1) - all countries")
@@ -773,32 +995,33 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         map_country_codes(
             map_type = "countries",
             values = "mean_pos",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
         ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
         ggplot2::ggtitle("Mean negative sentiment (0 - 1) - more than 10 works")
 
-    ggplot2::ggsave(
-        file.path("maps", "ch_5_subsidies_reform", "sentiment_neg_per_countries_10.pdf"),
-        width = 12,
-        height = 8,
-        map
-    )
-    ggplot2::ggsave(
-        file.path("maps", "ch_5_subsidies_reform", "sentiment_neg_per_countries_10.png"),
-        width = 12,
-        height = 8,
-        map
-    )
 
     ggplot2::ggsave(
         file.path("maps", "ch_5_subsidies_reform", "sentiment_neg_per_countries_all.pdf"),
         width = 12,
         height = 8,
-        map_sel
+        map
     )
     ggplot2::ggsave(
         file.path("maps", "ch_5_subsidies_reform", "sentiment_neg_per_countries_all.png"),
+        width = 12,
+        height = 8,
+        map
+    )
+
+    ggplot2::ggsave(
+        file.path("maps", "ch_5_subsidies_reform", "sentiment_neg_per_countries_10.pdf"),
+        width = 12,
+        height = 8,
+        map_sel
+    )
+    ggplot2::ggsave(
+        file.path("maps", "ch_5_subsidies_reform", "sentiment_neg_per_countries_10.png"),
         width = 12,
         height = 8,
         map_sel
@@ -821,7 +1044,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         map_country_codes(
             map_type = "countries",
             values = "mean_compound",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
         ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
         ggplot2::ggtitle("Mean compound sentiment (-1: negative; 1: positive) - all countries")
@@ -831,7 +1054,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         map_country_codes(
             map_type = "countries",
             values = "mean_compound",
-            geodata_path = gdm_dir
+            geodata_path = params$gdm_dir
         ) +
         ggplot2::scale_fill_gradient2(low = "#E69F00", mid = "white", high = "#56B4E9", midpoint = 0) +
         ggplot2::ggtitle("Mean compound sentiment (-1: negative; 1: positive) - more than 10 works")
@@ -876,7 +1099,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
 fn <- file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")
 
 if (!file.exists(fn)) {
-    data <- readRDS(file.path("input", "ch_5_subsidies_reform", "SentAnalysis_Scores.rds")) |>
+    data <- read.csv(file.path("input", "ch_5_subsidies_reform", "sent_analysis_subsidies.csv")) |>
         dplyr::group_by(year) |>
         dplyr::summarize(
             neg = mean(neg),
@@ -934,37 +1157,35 @@ if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), patt
 #|
 
 if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), pattern = "sentiments_over_time_neg_pos")) < 2) {
+    figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")) |>
+        tidyr::pivot_longer(cols = c(neg, pos), names_to = "type", values_to = "value") |>
+        ggplot2::ggplot() +
+        ggplot2::geom_line(aes(x = year, y = value, color = type, linetype = type)) +
+        ggplot2::scale_color_manual(values = c("black", "red", "blue", "green")) +
+        ggplot2::labs(
+            title = "Sentiment Analysis Scores (n > 10)",
+            x = "Year",
+            y = "Score",
+            color = "Type",
+            linetype = "Type"
+        ) +
+        ggplot2::theme_minimal()
 
-figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")) |>
-    tidyr::pivot_longer(cols = c(neg, pos), names_to = "type", values_to = "value") |>
-    ggplot2::ggplot() +
-    ggplot2::geom_line(aes(x = year, y = value, color = type, linetype = type)) +
-    ggplot2::scale_color_manual(values = c("black", "red", "blue", "green")) +
-    ggplot2::labs(
-        title = "Sentiment Analysis Scores (n > 10)",
-        x = "Year",
-        y = "Score",
-        color = "Type",
-        linetype = "Type"
-    ) +
-    ggplot2::theme_minimal()
 
+    ggplot2::ggsave(
+        file.path("figures", "ch_5_subsidies_reform", "sentiments_over_time_neg_pos.pdf"),
+        width = 12,
+        height = 6,
+        figure
+    )
+    ggplot2::ggsave(
+        file.path("figures", "ch_5_subsidies_reform", "sentiments_over_time_neg_pos.png"),
+        width = 12,
+        height = 6,
+        figure
+    )
 
-ggplot2::ggsave(
-    file.path("figures", "ch_5_subsidies_reform", "sentiments_over_time_neg_pos.pdf"),
-    width = 12,
-    height = 6,
-    figure
-)
-ggplot2::ggsave(
-    file.path("figures", "ch_5_subsidies_reform", "sentiments_over_time_neg_pos.png"),
-    width = 12,
-    height = 6,
-    figure
-)
-
-rm(figure)
-
+    rm(figure)
 }
 ```
 
@@ -1104,8 +1325,8 @@ if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), patt
 The number of hits are hits of the terms of the whole of the OpenAlex corpus. Due to methodological issues, the number of `R1 AND R2` are overestimates and contain some double counting.
 
 - **`government_financial_subsidies`** in OpenAlex: `r formatC(st_count, format="f", big.mark=",", digits=0)` hits
-- **`government_financial_subsidies`** in downloaded corpus: `r formatC(nrow(IPBES.R::corpus_read(corpus_dir)), format="f", big.mark=",", digits=0)` hits
-- **Subsidies corpus**: `r formatC(nrow(IPBES.R::corpus_read(corpus_tca_dir)), format="f", big.mark=",", digits=0)` hits
+- **`government_financial_subsidies`** in downloaded corpus: `r formatC(nrow(IPBES.R::corpus_read(params$corpus_dir)), format="f", big.mark=",", digits=0)` hits
+- **Subsidies corpus**: `r formatC(nrow(IPBES.R::corpus_read(params$corpus_dir)), format="f", big.mark=",", digits=0)` hits
 
 ## Manual review 50 paper
 
@@ -1129,8 +1350,8 @@ To download high resolution, [click here](`r file.path("figures", "ch_5_subsidie
 
 ```{r}
 #| label: publications_per_year_table
-readRDS(file.path("data", "ch_5_subsidies_reform", "publications_over_time.rds")) |> 
-IPBES.R::table_dt(fn = "publications_per_year")
+readRDS(file.path("data", "ch_5_subsidies_reform", "publications_over_time.rds")) |>
+    IPBES.R::table_dt(fn = "publications_per_year")
 ```
 
 ## Map Countries of Author Affiliations
@@ -1182,7 +1403,7 @@ The output of the model is 4 statistical scores:
 #| label: sentiment_analysis_table
 #|
 
-readRDS(file.path("input", "ch_5_subsidies_reform", "SentAnalysis_Scores.rds")) |>
+read.csv(file.path("input", "ch_5_subsidies_reform", "sent_analysis_subsidies.csv")) |>
     IPBES.R::table_dt(fn = "sentiment_scores", fixedColumns = list(leftColumns = 2))
 ```
 
