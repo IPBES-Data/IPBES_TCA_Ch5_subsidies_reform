@@ -49,10 +49,22 @@ params:
     #
     pages_dir: !expr file.path(".", "data", "ch_5_subsidies_reform", "pages")
     #
+    # corpora
     corpus_dir: !expr file.path("data", "ch_5_subsidies_reform", "corpus")
     corpus_authors_dir: !expr file.path("data", "ch_5_subsidies_reform", "corpus_authors")
     corpus_topics_dir: !expr file.path("data", "ch_5_subsidies_reform", "corpus_topics")
-
+    #
+    # input
+    fn_sentiment_results: !expr file.path("input", "ch_5_subsidies_reform", "sensitivity_analysis_output_02_01.csv")
+    # data
+    fn_count: !expr file.path("data", "ch_5_subsidies_reform", "st_count.rds")
+    fn_publications_per_country_data: !expr file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds")
+    fn_publications_temporal: !expr file.path("data", "ch_5_subsidies_reform", "publications_over_time.rds")
+    fn_sentiment_spatial_data: !expr file.path("data", "ch_5_subsidies_reform", "sentiment_spatial_data.rds")
+    fn_sentiment_temporal_data: !expr file.path("data", "ch_5_subsidies_reform", "sentiment_temporal_data.rds")
+    #
+    # figures parameter
+    min_count_sentiment_timeseries: 10
 ---
 
 ```{r}
@@ -128,18 +140,19 @@ The search terms is [st](input/ch_5_subsidies_refrm/government_financial_support
 #| label: get get_st_count
 #|
 
-fn <- file.path("data", "ch_5_subsidies_reform", "st_count.rds")
-
-if (!file.exists(fn)) {
-    st_count <- openalexR::oa_fetch(
+if (!file.exists(params$fn_count)) {
+    st_count  <- list(
+        timestamp = Sys.time()
+    )
+    st_count$st_count <- openalexR::oa_fetch(
         title_and_abstract.search = st,
         count_only = TRUE,
         verbose = TRUE
     )[, "count"]
 
-    saveRDS(st_count, fn)
+    saveRDS(st_count, params$fn_count)
 } else {
-    st_count <- readRDS(fn)
+    st_count <- readRDS(params$fn_count)
 }
 ```
 
@@ -262,7 +275,7 @@ id_deduplicated <- corpus_read("./data/ch_5_subsidies_reform/corpus_deduplicated
 
 (!(id_deduplicated$id %in% id_org$id)) |> sum() |> as.numeric()
 
-NOW IF EVErYTHING IS OK, DELETE THE OLD CORPUS AND RENAME THE NEW ONE
+NOW IF EVERYTHING IS OK, DELETE THE OLD CORPUS AND RENAME THE NEW ONE
 ```
 
 ## Export Data from Subsidies Corpus
@@ -426,57 +439,15 @@ if (!dir.exists(params$corpus_authors_dir)) {
         dbExecute(conn = con)
 
     duckdb::dbDisconnect(con, shutdown = TRUE)
-
-    ###################################
-
-    # dir.create(params$corpus_authors_dir, showWarnings = FALSE)
-
-    # years <- IPBES.R::corpus_read(params$corpus_dir) |>
-    #     distinct(publication_year) |>
-    #     collect() |>
-    #     unlist() |>
-    #     as.vector() |>
-    #     sort()
-
-    # pbmcapply::pbmclapply(
-    #     years,
-    #     function(y) {
-    #         message("\nProcessing year: ", y)
-    #         IPBES.R::corpus_read(params$corpus_dir) |>
-    #             dplyr::filter(publication_year == y) |>
-    #             dplyr::select(
-    #                 id,
-    #                 publication_year,
-    #                 author
-    #             ) |>
-    #             collect() |>
-    #             IPBES.R::extract_authors(
-    #                 positions = TRUE
-    #             ) |>
-    #             arrow::write_dataset(
-    #                 path = params$corpus_authors_dir,
-    #                 partitioning = c("publication_year"),
-    #                 format = "parquet",
-    #                 existing_data_behavior = "overwrite"
-    #             )
-    #     },
-    #     mc.cores = 3,
-    #     mc.preschedule = FALSE
-    # )
 }
 ```
-
-
-
 
 ## Publications over time
 ```{r}
 #| label: publications_over_time_data
-## | |
+#|
 
-fn <- file.path("data", "ch_5_subsidies_reform", "publications_over_time.rds")
-
-if (!file.exists(fn)) {
+if (!file.exists(params$fn_publications_temporal)) {
     data <- read_corpus(params$corpus_dir) |>
         dplyr::select(publication_year) |>
         dplyr::arrange(publication_year) |>
@@ -513,7 +484,7 @@ if (!file.exists(fn)) {
                 )
         )
 
-    saveRDS(data, fn)
+    saveRDS(data)
 }
 
 ```
@@ -522,7 +493,7 @@ if (!file.exists(fn)) {
 #| label: publications_over_time_figure
 #|
 if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), pattern = "publications_over_time")) < 2) {
-    figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_over_time.rds")) |>
+    figure <- readRDS(params$fn_publications_temporal) |>
         dplyr::filter(publication_year >= 1900) |>
         ggplot() +
         #
@@ -572,9 +543,7 @@ if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), patt
 ```{r}
 #| label: publications_per_country_data
 
-fn <- file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds")
-
-if (!file.exists(fn)) {
+if (!file.exists(params$fn_publications_per_country_data)) {
     corpus <- corpus_read(params$corpus_authors_dir)
 
     data_first <- corpus |>
@@ -665,7 +634,7 @@ if (!file.exists(fn)) {
         dplyr::add_row(
             data_oa
         ) |>
-        saveRDS(file = fn)
+        saveRDS(file = params$fn_publications_per_country_data)
 
     rm(data_first, data_all, data_oa, fn)
 }
@@ -677,7 +646,7 @@ if (!file.exists(fn)) {
 #|
 
 if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern = "publications_countries")) < 2) {
-    data <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds")) |>
+    data <- readRDS(params$fn_publications_per_country_data) |>
         dplyr::group_by(iso3c) |>
         dplyr::summarize(
             count_first = sum(count[position == "first"], na.rm = TRUE),
@@ -702,7 +671,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
             p_all_diff = (p_oa - p_all) * 100,
         )
 
-    # data <- readRDS(file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds"))
+    # data <- readRDS(params$fn_publications_per_country_data)
 
     map <- patchwork::wrap_plots(
         data |> map_country_codes(
@@ -823,28 +792,35 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
 #| label: sentiment_per_countries_data
 #|
 
-fn <- file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_countries.rds")
 
-if (!file.exists(fn)) {
-    data <- read_corpus(params$corpus_dir) |>
-        dplyr::select(id, author) |>
+if (!file.exists(params$fn_sentiment_spatial_data)) {
+    data <- read_corpus(params$corpus_authors_dir) |>
+        dplyr::select(
+            work_id,
+            institution_country_code
+        ) |>
+        dplyr::filter(
+            !is.na(institution_country_code)
+        ) |>
         collect() |>
         mutate(
-            author = IPBES.R::unserialize_arrow(author),
-            iso2c = IPBES.R::extract_countries(author, return_all = TRUE)$cc,
-            author = NULL
-        ) |>
-        mutate(
             iso3c = countrycode::countrycode(
-                iso2c,
+                institution_country_code,
                 origin = "iso2c",
                 destination = "iso3c"
             ),
-            iso2c = NULL
+            institution_country_code = NULL
         ) |>
         dplyr::left_join(
-            read.csv(file.path("input", "ch_5_subsidies_reform", "sent_analysis_subsidies.csv")),
-            by = "id"
+            read.csv(params$fn_sentiment_results) |>
+                select(
+                    work_id = id,
+                    neg,
+                    neu,
+                    pos,
+                    compound
+                ),
+            by = "work_id"
         ) |>
         dplyr::group_by(iso3c) |>
         dplyr::summarize(
@@ -857,7 +833,11 @@ if (!file.exists(fn)) {
         dplyr::arrange(
             dplyr::desc(mean_neg)
         ) |>
-        saveRDS(file = fn)
+        # Filter out missing countries - only necessary as analysis not completed yet
+        dplyr::filter(
+            !is.nan(mean_neg)
+        ) |>
+        saveRDS(file = params$fn_sentiment_spatial_data)
 }
 ```
 
@@ -867,7 +847,7 @@ if (!file.exists(fn)) {
 #|
 
 if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern = "sentiment_neu_per_countries")) < 4) {
-    data <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_countries.rds"))
+    data <- readRDS(params$fn_sentiment_spatial_data)
 
     map <- data |>
         map_country_codes(
@@ -879,7 +859,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         ggplot2::ggtitle("Mean neutral sentiment (0 - 1) - all countries")
 
     map_sel <- data |>
-        dplyr::filter(n > 10) |>
+        dplyr::filter(n > params$min_count_sentiment_timeseries) |>
         map_country_codes(
             map_type = "countries",
             values = "mean_neu",
@@ -924,7 +904,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
 #|
 
 if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern = "sentiment_pos_per_countries")) < 4) {
-    data <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_countries.rds"))
+    data <- readRDS(params$fn_sentiment_spatial_data)
 
     map <- data |>
         map_country_codes(
@@ -936,7 +916,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         ggplot2::ggtitle("Mean positive sentiment (0 - 1) - all countries")
 
     map_sel <- data |>
-        dplyr::filter(n > 10) |>
+        dplyr::filter(n > params$min_count_sentiment_timeseries) |>
         map_country_codes(
             map_type = "countries",
             values = "mean_pos",
@@ -979,7 +959,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
 #| label: sentiment_neg_per_countries_map
 #|
 if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern = "sentiment_neg_per_countries")) < 4) {
-    data <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_countries.rds"))
+    data <- readRDS(params$fn_sentiment_spatial_data)
 
     map <- data |>
         map_country_codes(
@@ -991,7 +971,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         ggplot2::ggtitle("Mean negative sentiment (0 - 1) - all countries")
 
     map_sel <- data |>
-        dplyr::filter(n > 10) |>
+        dplyr::filter(n > params$min_count_sentiment_timeseries) |>
         map_country_codes(
             map_type = "countries",
             values = "mean_pos",
@@ -1038,7 +1018,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
 #|
 
 if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern = "sentiment_comp_per_countries")) < 4) {
-    data <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_countries.rds"))
+    data <- readRDS(params$fn_sentiment_spatial_data)
 
     map <- data |>
         map_country_codes(
@@ -1050,7 +1030,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
         ggplot2::ggtitle("Mean compound sentiment (-1: negative; 1: positive) - all countries")
 
     map_sel <- data |>
-        dplyr::filter(n > 10) |>
+        dplyr::filter(n > params$min_count_sentiment_timeseries) |>
         map_country_codes(
             map_type = "countries",
             values = "mean_compound",
@@ -1096,10 +1076,16 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
 #| label: sentiments_over_time_data
 #|
 
-fn <- file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")
-
-if (!file.exists(fn)) {
-    data <- read.csv(file.path("input", "ch_5_subsidies_reform", "sent_analysis_subsidies.csv")) |>
+if (!file.exists(params$fn_sentiment_temporal_data)) {
+    data <- read.csv(params$fn_sentiment_results) |>
+        select(
+            work_id = id,
+            year = date,
+            neg,
+            neu,
+            pos,
+            compound
+        ) |>
         dplyr::group_by(year) |>
         dplyr::summarize(
             neg = mean(neg),
@@ -1108,10 +1094,7 @@ if (!file.exists(fn)) {
             compound = mean(compound),
             n = n()
         ) |>
-        dplyr::filter(
-            n > 10
-        ) |>
-        saveRDS(file = fn)
+        saveRDS(file = params$fn_sentiment_temporal_data)
 }
 ```
 
@@ -1120,13 +1103,16 @@ if (!file.exists(fn)) {
 #|
 
 if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), pattern = "sentiments_over_time")) < 2) {
-    figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")) |>
+    figure <- readRDS(params$fn_sentiment_temporal_data) |>
+        dplyr::filter(
+            n > params$min_count_sentiment_timeseries
+        ) |>
         tidyr::pivot_longer(cols = c(neg, neu, pos, compound), names_to = "type", values_to = "value") |>
         ggplot2::ggplot() +
         ggplot2::geom_line(aes(x = year, y = value, color = type, linetype = type)) +
         ggplot2::scale_color_manual(values = c("black", "red", "blue", "green")) +
         ggplot2::labs(
-            title = "Sentiment Analysis Scores (n > 10)",
+            title = paste0("Sentiment Analysis Scores (n > ", params$min_count_sentiment_timeseries, ")"),
             x = "Year",
             y = "Score",
             color = "Type",
@@ -1157,13 +1143,16 @@ if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), patt
 #|
 
 if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), pattern = "sentiments_over_time_neg_pos")) < 2) {
-    figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")) |>
+    figure <- readRDS(params$fn_sentiment_temporal_data) |>
+        dplyr::filter(
+            n > params$min_count_sentiment_timeseries
+        ) |>
         tidyr::pivot_longer(cols = c(neg, pos), names_to = "type", values_to = "value") |>
         ggplot2::ggplot() +
         ggplot2::geom_line(aes(x = year, y = value, color = type, linetype = type)) +
         ggplot2::scale_color_manual(values = c("black", "red", "blue", "green")) +
         ggplot2::labs(
-            title = "Sentiment Analysis Scores (n > 10)",
+            title = paste0("Sentiment Analysis Scores (n > ", params$min_count_sentiment_timeseries, ")"),
             x = "Year",
             y = "Score",
             color = "Type",
@@ -1194,11 +1183,14 @@ if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), patt
 #|
 
 if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), pattern = "sentiments_neg_over_time")) < 2) {
-    figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")) |>
+    figure <- readRDS(params$fn_sentiment_temporal_data) |>
+        dplyr::filter(
+            n > params$min_count_sentiment_timeseries
+        ) |>
         ggplot2::ggplot() +
         ggplot2::geom_line(ggplot2::aes(x = year, y = neg)) +
         ggplot2::labs(
-            title = "Sentiment Analysis negative Score (n > 10)",
+            title = paste0("Sentiment Analysis negative Score (n > ", params$min_count_sentiment_timeseries, ")"),
             x = "Year",
             y = "Negative score"
         ) +
@@ -1225,11 +1217,14 @@ if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), patt
 #| label: sentiments_neu_over_time_figure
 #|
 if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), pattern = "sentiments_neu_over_time")) < 2) {
-    figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")) |>
+    figure <- readRDS(params$fn_sentiment_temporal_data) |>
+        dplyr::filter(
+            n > params$min_count_sentiment_timeseries
+        ) |>
         ggplot2::ggplot() +
         ggplot2::geom_line(ggplot2::aes(x = year, y = neu)) +
         ggplot2::labs(
-            title = "Sentiment Analysis neutral Score (n > 10)",
+            title = paste0("Sentiment Analysis neutral Score (n > ", params$min_count_sentiment_timeseries, ")"),
             x = "Year",
             y = "Neutral score"
         ) +
@@ -1258,11 +1253,14 @@ if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), patt
 #|
 
 if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), pattern = "sentiments_pos_over_time")) < 2) {
-    figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")) |>
+    figure <- readRDS(params$fn_sentiment_temporal_data) |>
+        dplyr::filter(
+            n > params$min_count_sentiment_timeseries
+        ) |>
         ggplot2::ggplot() +
         ggplot2::geom_line(ggplot2::aes(x = year, y = pos)) +
         ggplot2::labs(
-            title = "Sentiment Analysis positive Score (n > 10)",
+            title = paste0("Sentiment Analysis positive Score (n > ", params$min_count_sentiment_timeseries, ")"),
             x = "Year",
             y = "Positive score"
         ) +
@@ -1290,11 +1288,14 @@ if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), patt
 #| label: sentiments_comp_over_time_figure
 #|
 if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), pattern = "sentiments_comp_over_time")) < 2) {
-    figure <- readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_timeseries.rds")) |>
+    figure <- readRDS(params$fn_sentiment_temporal_data) |>
+        dplyr::filter(
+            n > params$min_count_sentiment_timeseries
+        ) |>
         ggplot2::ggplot() +
         ggplot2::geom_line(ggplot2::aes(x = year, y = compound)) +
         ggplot2::labs(
-            title = "Sentiment Analysis Compound Score (n > 10)",
+            title = paste0("Sentiment Analysis Compound Score (n > ", params$min_count_sentiment_timeseries, ")"),
             x = "Year",
             y = "Compound score"
         ) +
@@ -1324,7 +1325,7 @@ if (length(list.files(path = file.path("figures", "ch_5_subsidies_reform"), patt
 
 The number of hits are hits of the terms of the whole of the OpenAlex corpus. Due to methodological issues, the number of `R1 AND R2` are overestimates and contain some double counting.
 
-- **`government_financial_subsidies`** in OpenAlex: `r formatC(st_count, format="f", big.mark=",", digits=0)` hits
+- **`government_financial_subsidies`** in OpenAlex: `r formatC(st_count$st_count, format="f", big.mark=",", digits=0)` hits
 - **`government_financial_subsidies`** in downloaded corpus: `r formatC(nrow(IPBES.R::corpus_read(params$corpus_dir)), format="f", big.mark=",", digits=0)` hits
 - **Subsidies corpus**: `r formatC(nrow(IPBES.R::corpus_read(params$corpus_dir)), format="f", big.mark=",", digits=0)` hits
 
@@ -1350,7 +1351,7 @@ To download high resolution, [click here](`r file.path("figures", "ch_5_subsidie
 
 ```{r}
 #| label: publications_per_year_table
-readRDS(file.path("data", "ch_5_subsidies_reform", "publications_over_time.rds")) |>
+readRDS(params$fn_publications_temporal) |>
     IPBES.R::table_dt(fn = "publications_per_year")
 ```
 
@@ -1380,7 +1381,7 @@ To download high resolution, [click here](`r file.path("maps", "ch_5_subsidies_r
 #| label: map_countries_table
 #|
 
-readRDS(file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds")) |>
+readRDS(params$fn_publications_per_country_data) |>
     IPBES.R::table_dt(fn = "countries_first_author", fixedColumns = list(leftColumns = 2))
 ```
 
@@ -1413,7 +1414,7 @@ Here is the per country table
 #| label: sentiments_countries_table
 #|
 
-readRDS(file.path("data", "ch_5_subsidies_reform", "sentAnalysis_scores_countries.rds")) |>
+readRDS(params$fn_sentiment_spatial_data) |>
     IPBES.R::table_dt(fn = "sentiments_comp_over_time")
 rm(data)
 ```
