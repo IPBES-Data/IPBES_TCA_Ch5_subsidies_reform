@@ -55,7 +55,7 @@ params:
     corpus_topics_dir: !expr file.path("data", "ch_5_subsidies_reform", "corpus_topics")
     #
     # input
-    fn_sentiment_results: !expr file.path("input", "ch_5_subsidies_reform", "sensitivity_analysis_output_02_01.csv")
+    fn_sentiment_results: !expr file.path("input", "ch_5_subsidies_reform", "sentiment_results.rds")
     # data
     fn_count: !expr file.path("data", "ch_5_subsidies_reform", "st_count.rds")
     fn_publications_per_country_data: !expr file.path("data", "ch_5_subsidies_reform", "publications_per_country_data.rds")
@@ -295,7 +295,7 @@ if (!file.exists(fn)) {
 }
 ```
 
-### Export 50 random papers for manual analysis
+### Export 250 random papers for manual analysis
 
 ```{r}
 #| label: export_random
@@ -812,7 +812,7 @@ if (!file.exists(params$fn_sentiment_spatial_data)) {
             institution_country_code = NULL
         ) |>
         dplyr::left_join(
-            read.csv(params$fn_sentiment_results) |>
+            readRDS(params$fn_sentiment_results) |>
                 select(
                     work_id = id,
                     neg,
@@ -1077,7 +1077,7 @@ if (length(list.files(path = file.path("maps", "ch_5_subsidies_reform"), pattern
 #|
 
 if (!file.exists(params$fn_sentiment_temporal_data)) {
-    data <- read.csv(params$fn_sentiment_results) |>
+    data <- readRDS(params$fn_sentiment_results) |>
         select(
             work_id = id,
             year = date,
@@ -1404,7 +1404,7 @@ The output of the model is 4 statistical scores:
 #| label: sentiment_analysis_table
 #|
 
-read.csv(file.path("input", "ch_5_subsidies_reform", "sent_analysis_subsidies.csv")) |>
+readRDS(params$fn_sentiment_results) |>
     IPBES.R::table_dt(fn = "sentiment_scores", fixedColumns = list(leftColumns = 2))
 ```
 
