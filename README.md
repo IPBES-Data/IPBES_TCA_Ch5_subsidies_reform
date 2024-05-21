@@ -1,3 +1,10 @@
+# This Repo has merged into the [IPBES TCA Corpus repository](https://github.com/IPBES-Data/IPBES_TCA_Corpus).
+# The report is available [here](https://ipbes-data.github.io/IPBES_TCA_Corpus/IPBES_TCA_Ch5_subsidies_reform.html)
+
+
+
+
+
 # Transformative Change Assessment - Ch 5 - Subsidies Reform
 
 [![DOI](https://zenodo.org/badge/DOI/99.9999/zenodo.9999999.svg)](https://doi.org/99.9999/zenodo.9999999)
